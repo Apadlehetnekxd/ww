@@ -422,6 +422,20 @@ function ChatPage() {
   const recognitionRef = useRef<any>(null);
   const dictBaseRef = useRef("");
 
+  useEffect(() => {
+    const raw = window.sessionStorage.getItem("neurix-vision-chat-handoff");
+    if (!raw) return;
+    window.sessionStorage.removeItem("neurix-vision-chat-handoff");
+    try {
+      const handoff = JSON.parse(raw) as { image?: string; label?: string; question?: string };
+      if (!handoff.image) return;
+      setInput(handoff.question || `Tell me about this ${handoff.label || "image"}.`);
+      setAttachments([{ id: createId(), name: `vision-${Date.now()}.jpg`, mime: "image/jpeg", size: 0, kind: "image", dataUrl: handoff.image }]);
+    } catch {
+      setError("Could not open the Vision image in chat.");
+    }
+  }, []);
+
   // Voice-to-text dictation via the Web Speech API. Appends recognised speech
   // to whatever is already in the composer.
   const toggleDictation = useCallback(() => {
