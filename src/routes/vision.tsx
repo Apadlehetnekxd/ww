@@ -37,6 +37,7 @@ function VisionPage() {
   const [questionError, setQuestionError] = useState('');
   const [busy, setBusy] = useState(false);
   const [listening, setListening] = useState(false);
+  const [liveTalking, setLiveTalking] = useState(false);
   const [followup, setFollowup] = useState('');
   const [allowFollowup, setAllowFollowup] = useState(true);
   const [spoken, setSpoken] = useState(true);
@@ -222,6 +223,15 @@ function VisionPage() {
     setSheet(null); void ask(question, selected);
   };
   const readAloud = () => { setSpeechError(''); voice.current.speak(followup || answer, setSpeechError); };
+  const toggleLiveTalking = () => {
+    if (liveTalking) { voice.current.stop(); setLiveTalking(false); return; }
+    setSpoken(true); setLiveTalking(true); setSpeechError(''); setSheet(null);
+    voice.current.liveListen(
+      text => { setQuestion(text); void ask(text, selected); },
+      active => setLiveTalking(active),
+      error => { setSpeechError(error); setLiveTalking(false); },
+    );
+  };
   const listen = () => {
     if (listening) { voice.current.stop(); setListening(false); return; }
     setSpoken(true); setListening(true); setQuestionError('');
@@ -377,7 +387,7 @@ function VisionPage() {
             <textarea aria-label="Your question" placeholder="What am I looking at?" value={question} onChange={event => setQuestion(event.target.value)} rows={2} maxLength={2000} />
             <button type="submit" className="vision-send" disabled={!question.trim() || busy} aria-label="Send view and question"><Send size={17} /></button>
           </div>
-          <div className="vision-voice-row"><button type="button" className="vision-voice-button" onClick={listen} aria-pressed={listening}><Mic size={15} />{listening ? 'Listening… tap to stop' : 'Use voice'}</button><span className="vision-fine">You can also type.</span></div>
+          <div className="vision-voice-row"><button type="button" className="vision-voice-button" onClick={listen} aria-pressed={listening}><Mic size={15} />{listening ? 'Listening… tap to stop' : 'Use voice'}</button><button type="button" className={`vision-voice-button ${liveTalking ? 'is-live' : ''}`} onClick={toggleLiveTalking} aria-pressed={liveTalking}><AudioLines size={15} />{liveTalking ? 'Live talking on' : 'Live talking'}</button></div><p className="vision-fine">{liveTalking ? 'Speak naturally. Each finished sentence is sent to Vision.' : 'You can also talk live with Vision.'}</p>
           <div className="vision-voice-row">
             <button type="button" className="vision-voice-button" aria-pressed={spoken} onClick={() => {
               setSpoken(!spoken); setSpeechError('');

@@ -52,6 +52,28 @@ export class VoiceService {
     recognition.onend = () => { this.recognition = null; onEnd(); };
     try { recognition.start(); } catch { this.recognition = null; onError('Voice could not start. You can type your question.'); onEnd(); }
   }
+  liveListen(onText: (text: string) => void, onState: (active: boolean) => void, onError: (text: string) => void) {
+    this.stop();
+    const browser = window as SpeechWindow;
+    const Constructor = browser.SpeechRecognition || browser.webkitSpeechRecognition;
+    if (!Constructor) { onError('Live voice is unavailable in this browser.'); onState(false); return; }
+    const recognition = new Constructor();
+    this.recognition = recognition;
+    recognition.lang = navigator.language || 'en-US';
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.onresult = event => {
+      const text = Array.from(event.results).filter(result => result.isFinal).map(result => result[0].transcript).join(' ').trim();
+      if (text) onText(text);
+    };
+    recognition.onerror = event => {
+      if (event.error === 'aborted' || event.error === 'no-speech') return;
+      onError(event.error === 'not-allowed' ? 'Microphone access is off. Allow it in browser settings.' : 'Live voice could not connect.');
+      onState(false);
+    };
+    recognition.onend = () => { this.recognition = null; onState(false); };
+    try { recognition.start(); onState(true); } catch { this.recognition = null; onError('Live voice could not start.'); onState(false); }
+  }
   speak(text: string, onError: (message: string) => void = () => {}, language?: string, reportFailure = true) {
     const clean = text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/[*#`]/g, '').trim();
     if (!clean) return;
