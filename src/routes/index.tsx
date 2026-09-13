@@ -127,6 +127,59 @@ function Hero() {
   );
 }
 
+function VisionSpotlight() {
+  return (
+    <section id="vision-spotlight" className="border-b border-border bg-foreground text-background">
+      <div className="max-w-[1400px] w-full mx-auto px-5 sm:px-6 lg:px-10 py-16 sm:py-24 lg:py-32">
+        <div className="grid lg:grid-cols-12 gap-10 lg:gap-16 items-end">
+          <div className="lg:col-span-8">
+            <Reveal variant="up">
+              <div className="flex flex-wrap items-center gap-3 mb-6">
+                <span className="inline-flex items-center rounded-full border border-background/40 px-3 py-1 text-[10px] font-semibold tracking-[0.22em]">NEW</span>
+                <span className="text-background/60 text-xs uppercase tracking-[0.2em]">Neurix Vision</span>
+              </div>
+            </Reveal>
+            <RevealText
+              level={2}
+              text="Point. Ask. Understand."
+              className="tf-display text-5xl sm:text-6xl md:text-8xl leading-[0.88] max-w-[10ch]"
+            />
+            <Reveal variant="up" delay={260}>
+              <p className="mt-8 text-lg sm:text-xl md:text-2xl leading-relaxed text-background/70 max-w-2xl">
+                A new kind of AI experience that sees the world with you. Scan an object, ask anything about it, and discover what is behind the frame.
+              </p>
+            </Reveal>
+          </div>
+          <Reveal variant="up" delay={360} className="lg:col-span-4">
+            <div className="border-t border-background/30 pt-5">
+              <div className="text-background/50 text-xs uppercase tracking-[0.2em]">Free to explore</div>
+              <p className="mt-4 text-background text-xl leading-snug">No subscription. No credit card. Just open your camera and start discovering.</p>
+              <Link to="/vision" className="tf-cta mt-8 inline-flex items-center justify-center gap-3 rounded-full bg-background text-foreground px-7 h-14 text-base font-medium">
+                Try Vision <span aria-hidden>→</span>
+              </Link>
+            </div>
+          </Reveal>
+        </div>
+        <div className="mt-14 sm:mt-20 grid sm:grid-cols-3 gap-px bg-background/30 border-y border-background/30">
+          {[
+            ["01", "See", "Recognize objects and scenes through your camera."],
+            ["02", "Ask", "Get answers about whatever is in front of you."],
+            ["03", "Explore", "Turn one moment into a deeper discovery."],
+          ].map(([number, title, text], index) => (
+            <Reveal key={title} variant="up" delay={index * 100} className="bg-foreground">
+              <div className="py-6 sm:py-8 sm:px-6 border-b sm:border-b-0 sm:border-r last:border-0 border-background/30">
+                <span className="text-background/40 text-xs tracking-[0.2em]">{number}</span>
+                <h3 className="tf-display text-2xl sm:text-3xl mt-8">{title}</h3>
+                <p className="mt-3 text-background/60 leading-relaxed">{text}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function About() {
   const stats = [
     { value: "$0", label: "while they charge $20/mo" },
@@ -253,10 +306,10 @@ function Tools() {
       n: "03",
       title: "Neurix Vision",
       description:
-        "See your world with AI. Open your camera, ask a question, and explore objects around you in real time.",
+        "See your world with AI. Open your camera, identify what is in front of you, and ask questions in real time — free to explore.",
       to: "/vision" as const,
       tone: "bg-background text-foreground",
-      status: "PRIVATE BETA · MEMBER ONLY",
+      status: "NEW · FREE TO EXPLORE",
     },
   ];
   return (
@@ -642,6 +695,7 @@ function Index() {
   return (
     <div className="tf-home-animated min-h-screen bg-background text-foreground">
       <Hero />
+      <VisionSpotlight />
       <About />
       <Tools />
       <Banknote3D />
