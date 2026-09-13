@@ -138,7 +138,7 @@ export class PointingSelection {
     if (!objects.some((object) => object.id === this.selected)) this.selected = null;
     const candidate = ray ? rankPointingTarget(ray, objects, this.selected, aspect) : null;
     if (candidate !== this.candidate) { this.candidate = candidate; this.since = now; }
-    if (now - this.since >= (candidate ? 140 : 500)) this.selected = candidate;
+    if (now - this.since >= (candidate ? 100 : 500)) this.selected = candidate;
     return this.selected;
   }
 

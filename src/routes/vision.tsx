@@ -346,7 +346,7 @@ function VisionPage() {
       )}
 
       {scanning && <section className="vision-scan-status">
-  <p className={`vision-depth-status is-${depthStatus}`} aria-live="polite">{depthStatus === 'available' ? 'LiDAR depth active' : depthStatus === 'checking' ? 'Checking depth sensor' : 'Camera depth mode'}</p>
+  <p className={`vision-depth-status is-${depthStatus}`} aria-live="polite">{depthStatus === 'available' ? 'LiDAR precision scan active' : depthStatus === 'checking' ? 'Checking depth sensor' : 'Camera depth mode'}</p>
         <p className="vision-status-title" aria-live="polite">{phase === 'scanning' ? 'Scanning environment' : 'Environment understood'}</p>
         <p className="vision-progress-copy">{progress}% complete • {100 - progress}% remaining</p>
         <div className="vision-progress" role="progressbar" aria-label="Environment scan" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
