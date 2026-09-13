@@ -121,7 +121,7 @@ export function rankPointingTarget(ray: PointingRay, objects: VisionObject[], pr
     const radius = Math.abs(d.y) * object.region.width * aspect / 2 + Math.abs(d.x) * object.region.height / 2;
     const gap = Math.max(0, cross - radius);
     const entry = rayEntry(ray, object.region);
-    if (entry === null && gap > 0.065) continue;
+    if (entry === null && gap > 0.12) continue;
     const score = (entry !== null ? 1.0 : 0.4) - gap * 5 - along * 0.25 + object.confidence * 0.3
       - object.region.width * object.region.height * 0.25 + (object.id === previous ? 0.18 : 0);
     if (score > bestScore) { bestId = object.id; bestScore = score; }
@@ -138,7 +138,7 @@ export class PointingSelection {
     if (!objects.some((object) => object.id === this.selected)) this.selected = null;
     const candidate = ray ? rankPointingTarget(ray, objects, this.selected, aspect) : null;
     if (candidate !== this.candidate) { this.candidate = candidate; this.since = now; }
-    if (now - this.since >= (candidate ? 320 : 650)) this.selected = candidate;
+    if (now - this.since >= (candidate ? 140 : 500)) this.selected = candidate;
     return this.selected;
   }
 
