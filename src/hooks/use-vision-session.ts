@@ -41,7 +41,10 @@ export function useVisionSession() {
   }, []);
 
   const start = useCallback(async () => {
-    if (!videoRef.current || !canvasRef.current || phaseRef.current === 'requesting') return;
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isPhone = /android.*mobile|iphone|ipod|windows phone|blackberry|opera mini|mobile safari/.test(userAgent)
+      || (navigator.maxTouchPoints > 0 && window.matchMedia('(max-width: 600px)').matches);
+    if (!isPhone || !videoRef.current || !canvasRef.current || phaseRef.current === 'requesting') return;
     release();
     const version = generation.current;
     setError(''); setFrame(emptyFrame); setMetrics(initialMetrics); setRecognitionStatus('');
