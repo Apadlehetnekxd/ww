@@ -273,7 +273,7 @@ function VisionPage() {
           <div className="vision-access-badges"><span>NEURIX VISION</span><span>PHONE EXPERIENCE</span></div>
           <h1 id="vision-phone-only-title">VISION<br /><em>IS PHONE ONLY</em></h1>
           <p className="vision-secondary">Your phone sees more than a screen. Scan the world, ask better questions, and discover what is in front of you.</p>
-          <div className="vision-qr-panel"><div className="vision-qr-placeholder" aria-label="Scan with your phone">NEURIX<br />VISION</div><div><strong>Open Vision on your phone</strong><span>Scan to continue the experience.</span></div></div>
+          <div className="vision-qr-panel"><img className="vision-qr-image" src="/neurix-vision-qr.jpeg" alt="QR code to open Neurix Vision on a phone" /><div><strong>Open Vision on your phone</strong><span>Scan to continue the experience.</span></div></div>
           <Link to="/" className="vision-back"><ArrowLeft size={12} /> Back to Neurix</Link>
         </section>
       </main>
