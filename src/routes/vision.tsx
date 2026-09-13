@@ -203,6 +203,7 @@ function VisionPage() {
     return { id: 'pointing-target', type: 'pointed-object', label: detectedTarget?.label || 'Tap to identify', confidence: detectedTarget?.confidence || 0.25, firstSeen: 0, lastSeen: Date.now(), observations: 1, region: { x: x - 0.09, y: y - 0.09, width: 0.18, height: 0.18 } } satisfies VisionObject;
   })() : null;
   const target = detectedTarget ?? pointingTarget;
+  const visibleObjects = frame.objects.length ? frame.objects : (pointingTarget ? [pointingTarget] : []);
   const targetPosition = target && videoRef.current && stage.current
     ? frameToViewport({ x: target.region.x + target.region.width / 2, y: target.region.y + target.region.height / 2 }, videoRef.current, stage.current.getBoundingClientRect()) : null;
   const targetVisible = targetPosition && targetPosition.x >= 12 && targetPosition.x <= viewport.width - 12 && targetPosition.y >= 24 && targetPosition.y <= viewport.height - 80;
@@ -353,9 +354,15 @@ function VisionPage() {
 
       {phase === 'live' && <>
         <button className="vision-touch-surface" aria-label="Explore camera view" onClick={onCameraTap} />
-        {target && targetVisible && <button className="vision-object-label" style={{ left: targetPosition.x, top: targetPosition.y }} onClick={() => { setSelected(target); setSheet('object'); }}>
-          <span className="vision-object-dot" /><span className="vision-object-line" /><span className="vision-object-name">{target.label}</span>
-        </button>}
+  {target && targetVisible && <button className="vision-object-label" style={{ left: targetPosition.x, top: targetPosition.y }} onClick={() => { setSelected(target); setSheet('object'); }}>
+  <span className="vision-object-dot" /><span className="vision-object-line" /><span className="vision-object-name">{target.label && target.label !== 'Visible object' ? target.label : 'Tap to identify'}</span>
+  </button>}
+  {visibleObjects.filter(object => object.id !== target?.id).map((object) => {
+    if (!videoRef.current || !stage.current) return null;
+    const position = frameToViewport({ x: object.region.x + object.region.width / 2, y: object.region.y + object.region.height / 2 }, videoRef.current, stage.current.getBoundingClientRect());
+    if (position.x < 12 || position.x > viewport.width - 12 || position.y < 24 || position.y > viewport.height - 80) return null;
+    return <button key={object.id} className="vision-object-label vision-object-secondary" style={{ left: position.x, top: position.y }} onClick={() => { setSelected(object); setSheet('object'); }}><span className="vision-object-dot" /><span className="vision-object-line" /><span className="vision-object-name">{object.label && object.label !== 'Visible object' ? object.label : 'Tap to identify'}</span></button>;
+  })}
         {hint && !tools && !sheet && !busy && !followup && <p className="vision-live-hint">Point at something. Or tap to explore.</p>}
         {tools && !sheet && <div className="vision-context-tools">
           <Link to="/" aria-label="Leave Vision"><ArrowLeft size={18} /></Link>
