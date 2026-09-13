@@ -6,6 +6,7 @@ import { VisionSheet } from '@/components/vision/vision-sheet';
 import { HandPoints } from '@/components/vision/hand-points';
 import { askVision, searchObject, searchWithLens, snapshotFrame, type LensResponse } from '@/lib/vision/ai-service';
 import { contains, frameToViewport, viewportToFrame } from '@/lib/vision/coordinates';
+import { rankPointingTarget } from '@/lib/vision/scene-memory';
 import { frameSignature, usefulViewChange } from '@/lib/vision/frame-change';
 import { VoiceService } from '@/lib/vision/voice-service';
 import { useAuth } from '@/hooks/use-auth';
@@ -185,7 +186,8 @@ function VisionPage() {
   };
 
   const pointed = frame.objects.find(object => object.id === frame.selectedId);
-  const target = pointed ?? null;
+  const fallbackId = frame.pointing ? rankPointingTarget(frame.pointing, frame.objects, null, videoRef.current && videoRef.current.videoHeight ? videoRef.current.videoWidth / videoRef.current.videoHeight : 1) : null;
+  const target = pointed ?? frame.objects.find(object => object.id === fallbackId) ?? null;
   const targetPosition = target && videoRef.current && stage.current
     ? frameToViewport({ x: target.region.x + target.region.width / 2, y: target.region.y + target.region.height / 2 }, videoRef.current, stage.current.getBoundingClientRect()) : null;
   const targetVisible = targetPosition && targetPosition.x >= 12 && targetPosition.x <= viewport.width - 12 && targetPosition.y >= 24 && targetPosition.y <= viewport.height - 80;
