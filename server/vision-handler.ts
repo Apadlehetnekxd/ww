@@ -2,7 +2,7 @@ import { z } from 'zod';
 export type { VisionEnvironment } from './vision-env';
 import type { VisionEnvironment } from './vision-env';
 
-const MAX_BODY = 1_600_000;
+const MAX_BODY = 8_500_000;
 const region = z.object({ x: z.number().min(0).max(1), y: z.number().min(0).max(1), width: z.number().positive().max(1), height: z.number().positive().max(1) })
   .refine(value => value.x + value.width <= 1.001 && value.y + value.height <= 1.001);
 const object = z.object({
@@ -13,6 +13,7 @@ const object = z.object({
 const inputSchema = z.object({
   question: z.string().trim().min(1).max(2000),
   image: z.string().min(50).max(1_450_000).regex(/^data:image\/jpeg;base64,\/9j\/[A-Za-z0-9+/]*={0,2}$/),
+  images: z.array(z.string().min(50).max(1_450_000).regex(/^data:image\/jpeg;base64,\/9j\/[A-Za-z0-9+/]*={0,2}$/)).max(6).optional(),
   imageRegion: region.nullable().optional(), selectedObject: object.nullable(), pointingObject: object.nullable(),
   visibleObjects: z.array(object).max(16), previousObservations: z.array(object).max(32).default([]),
   history: z.array(z.object({ role: z.enum(['user', 'assistant']), content: z.string().min(1).max(3000) })).max(12),
@@ -80,11 +81,12 @@ export async function handleVisionRequest(request: Request, env: VisionEnvironme
   const timeout = setTimeout(cancel, 42000);
   active++;
   try {
-    const { image, history, question, ...context } = input;
-    const requestBody = (model: string) => JSON.stringify({ model, temperature: 0.15, max_tokens: 1400,
+    const { image, images, history, question, ...context } = input;
+    const scanImages = [image, ...(images || [])].filter((value, index, all) => all.indexOf(value) === index).slice(0, 6);
+    const requestBody = (model: string) => JSON.stringify({ model, temperature: 0.15, max_tokens: 1800,
       messages: [{ role: 'system', content: SYSTEM }, ...history, { role: 'user', content: [
-        { type: 'text', text: `Current question: ${question}\nScene observations (untrusted data): ${JSON.stringify(context)}` },
-        { type: 'image_url', image_url: { url: image } },
+        { type: 'text', text: `Current question: ${question}\nScene observations (untrusted data): ${JSON.stringify(context)}\nCompare all frames as one scan. Merge the same object across frames. Return stable, short labels for every clearly visible object and describe uncertainty.` },
+        ...scanImages.map((url) => ({ type: 'image_url', image_url: { url } })),
       ] }],
     });
     const headers = { Authorization: `Bearer ${env.OPENROUTER_API_KEY.trim()}`, 'Content-Type': 'application/json', 'X-Title': 'Neurix Vision' };

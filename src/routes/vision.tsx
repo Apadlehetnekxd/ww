@@ -20,7 +20,7 @@ type PendingView = { question: string; instruction: string; signature: number[];
 function VisionPage() {
   const { user, loading: authLoading } = useAuth();
   const session = useVisionSession();
-  const { phase, metrics, frame, videoRef, canvasRef } = session;
+  const { phase, metrics, frame, videoRef, canvasRef, scanImages } = session;
   const stage = useRef<HTMLElement>(null);
   const voice = useRef(new VoiceService());
   const request = useRef<AbortController | null>(null);
@@ -49,6 +49,7 @@ function VisionPage() {
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
   const [phoneOnly, setPhoneOnly] = useState<boolean | null>(null);
   const questionDraft = useRef(question);
+  const scanAnalyzed = useRef(false);
 
   useEffect(() => {
     const userAgent = navigator.userAgent.toLowerCase();
@@ -71,7 +72,7 @@ function VisionPage() {
       request.current?.abort(); request.current = null;
       voice.current.stop(); pending.current = null; history.current = [];
       setBusy(false); setListening(false); setSheet(null); setTools(false);
-      setAnswer(''); setFollowup(''); setSelected(null);
+      setAnswer(''); setFollowup(''); setSelected(null); scanAnalyzed.current = false;
       return;
     }
     setHint(true);
@@ -117,6 +118,7 @@ function VisionPage() {
       const result = await askVision({
         question: prompt,
         image: snapshotFrame(video),
+        images: scanImages.current.slice(-5),
         selectedObject: latestObject,
         visibleObjects: objects,
         pointingObject: objects.find(item => item.id === currentFrame.current.selectedId) ?? null,
@@ -146,7 +148,13 @@ function VisionPage() {
     } finally {
       if (request.current === controller) { request.current = null; setBusy(false); }
     }
-  }, [allowFollowup, session.requestAnalysis, spoken, videoRef]);
+  }, [allowFollowup, scanImages, session.requestAnalysis, spoken, videoRef]);
+
+  useEffect(() => {
+    if (phase !== 'live' || scanAnalyzed.current || scanImages.current.length < 2) return;
+    scanAnalyzed.current = true;
+    void ask('Identify every clearly visible object in this completed scan. Put a short label beside each object and mention uncertainty.', null);
+  }, [ask, phase, scanImages]);
 
   useEffect(() => {
     if (phase !== 'live') return;
