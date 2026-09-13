@@ -5,6 +5,7 @@
 .vision-entry-lidar i:nth-child(1){left:8%;top:15%}.vision-entry-lidar i:nth-child(2){left:22%;top:42%;animation-delay:.4s}.vision-entry-lidar i:nth-child(3){left:38%;top:22%;animation-delay:.8s}.vision-entry-lidar i:nth-child(4){left:55%;top:35%;animation-delay:1.2s}.vision-entry-lidar i:nth-child(5){left:74%;top:18%;animation-delay:1.6s}.vision-entry-lidar i:nth-child(6){left:91%;top:45%;animation-delay:2s}.vision-entry-lidar i:nth-child(7){left:15%;top:78%;animation-delay:2.4s}.vision-entry-lidar i:nth-child(8){left:47%;top:70%;animation-delay:2.8s}.vision-entry-lidar i:nth-child(9){left:82%;top:82%;animation-delay:3.2s}
 .vision-entry-lidar i:nth-child(n+10) { opacity: .7; transform: scale(.7); }
 .vision-entry-screen .vision-entry { position: relative; z-index: 1; bottom: auto; left: auto; right: auto; margin: 0; width: min(100% - 40px, 760px); padding: 40px 0; }
+.vision-entry-media { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .vision-entry-mobile { padding-top: 18vh !important; }
 .vision-entry-desktop { max-width: 760px; text-align: center; }
 .vision-entry-screen h1 { margin: 22px 0; font-size: clamp(3.5rem, 11vw, 8rem); line-height: .84; letter-spacing: -.07em; text-transform: uppercase; }
