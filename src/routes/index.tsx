@@ -127,6 +127,32 @@ function Hero() {
   );
 }
 
+function VisionSpotlight() {
+  const moments = [["01", "See what is there", "Vision reads the scene around you, turning a camera view into a living layer of context."], ["02", "Ask without limits", "Point at an object, ask a question, and keep exploring until the moment makes sense."], ["03", "Find the next step", "Discover visual matches, useful context, and new directions without leaving Neurix."]];
+  return (
+    <section id="vision-spotlight" className="vision-showcase border-b border-border bg-foreground text-background overflow-hidden">
+      <div className="vision-lidar" aria-hidden="true">{Array.from({ length: 18 }, (_, index) => <i key={index} />)}</div>
+      <div className="relative max-w-[1400px] w-full mx-auto px-5 sm:px-6 lg:px-10">
+        <div className="min-h-[78svh] flex items-end py-20 sm:py-28 lg:py-40">
+          <div className="relative z-10 max-w-4xl">
+            <Reveal variant="up"><div className="vision-kicker">NEW / NEURIX VISION / FREE TO EXPLORE</div></Reveal>
+            <RevealText level={2} text="Meet Vision" className="vision-title tf-display text-[clamp(4.5rem,18vw,13rem)] leading-[0.78] tracking-[-0.07em]" />
+            <Reveal variant="up" delay={220}><p className="mt-9 max-w-xl text-xl sm:text-2xl leading-relaxed text-background/70">Your camera is no longer just a camera. It is a way to understand the world, ask better questions, and see what comes next.</p></Reveal>
+            <Reveal variant="up" delay={360}><Link to="/vision" className="tf-cta mt-10 inline-flex h-14 items-center gap-4 rounded-full bg-background px-7 text-foreground">Enter Vision <span aria-hidden>→</span></Link></Reveal>
+          </div>
+        </div>
+        <div className="grid gap-px bg-background/25 border-y border-background/25 sm:grid-cols-3">
+          {moments.map(([number, title, text], index) => <Reveal key={number} variant="up" delay={index * 120} className="bg-foreground"><article className="min-h-64 py-8 sm:px-6"><span className="text-xs tracking-[0.2em] text-background/45">{number}</span><h3 className="tf-display mt-14 text-3xl sm:text-4xl">{title}</h3><p className="mt-4 leading-relaxed text-background/60">{text}</p></article></Reveal>)}
+        </div>
+        <div className="grid gap-10 py-20 sm:py-28 lg:grid-cols-2 lg:gap-24">
+          <Reveal variant="up"><p className="text-xs uppercase tracking-[0.2em] text-background/45">A new visual language</p><h3 className="tf-display mt-6 text-5xl sm:text-7xl leading-[0.86]">From seeing<br />to knowing.</h3></Reveal>
+          <Reveal variant="up" delay={180}><div className="space-y-6 text-lg leading-relaxed text-background/65"><p>Vision gives every curious moment a second layer. Identify what is in front of you, ask it anything, and follow the thread wherever it leads.</p><p>It is fast, visual, and free to explore. No complicated setup. Just open Vision on your phone and begin.</p><Link to="/vision" className="inline-flex items-center gap-3 border-b border-background/50 pb-2 text-background">Try the new Vision experience <span aria-hidden>→</span></Link></div></Reveal>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function About() {
   const stats = [
     { value: "$0", label: "while they charge $20/mo" },
@@ -253,10 +279,10 @@ function Tools() {
       n: "03",
       title: "Neurix Vision",
       description:
-        "See your world with AI. Open your camera, ask a question, and explore objects around you in real time.",
+        "See your world with AI. Open your camera, identify what is in front of you, and ask questions in real time — free to explore.",
       to: "/vision" as const,
       tone: "bg-background text-foreground",
-      status: "PRIVATE BETA · MEMBER ONLY",
+      status: "NEW · FREE TO EXPLORE",
     },
   ];
   return (
@@ -642,6 +668,7 @@ function Index() {
   return (
     <div className="tf-home-animated min-h-screen bg-background text-foreground">
       <Hero />
+      <VisionSpotlight />
       <About />
       <Tools />
       <Banknote3D />

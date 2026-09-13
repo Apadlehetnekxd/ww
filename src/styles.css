@@ -167,6 +167,17 @@
   z-index: 2;
 }
 
+.vision-showcase { position: relative; isolation: isolate; }
+.vision-lidar { position: absolute; inset: 0; overflow: hidden; opacity: .7; pointer-events: none; background: radial-gradient(circle at 50% 42%, #ffffff12 0 1px, transparent 2px), radial-gradient(circle at 20% 70%, #ffffff10 0 1px, transparent 2px); background-size: 28px 28px, 43px 43px; animation: lidar-drift 18s linear infinite; }
+.vision-lidar::before { content: ""; position: absolute; top: 0; bottom: 0; left: 8%; width: 1px; background: linear-gradient(transparent, #fff8, transparent); box-shadow: 0 0 28px #fff; animation: lidar-scan 7s ease-in-out infinite; }
+.vision-lidar i { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #fff; box-shadow: 0 0 12px #fff; animation: lidar-pulse 3.5s ease-in-out infinite; }
+.vision-lidar i:nth-child(1){left:12%;top:18%}.vision-lidar i:nth-child(2){left:31%;top:28%;animation-delay:.6s}.vision-lidar i:nth-child(3){left:67%;top:19%;animation-delay:1.1s}.vision-lidar i:nth-child(4){left:82%;top:37%;animation-delay:1.7s}.vision-lidar i:nth-child(5){left:22%;top:53%;animation-delay:2.1s}.vision-lidar i:nth-child(6){left:55%;top:48%;animation-delay:.3s}.vision-lidar i:nth-child(7){left:91%;top:62%;animation-delay:1.4s}.vision-lidar i:nth-child(8){left:42%;top:72%;animation-delay:2.4s}.vision-lidar i:nth-child(9){left:74%;top:78%;animation-delay:.8s}.vision-lidar i:nth-child(10){left:6%;top:86%;animation-delay:1.9s}.vision-lidar i:nth-child(11){left:36%;top:88%;animation-delay:2.7s}.vision-lidar i:nth-child(12){left:63%;top:90%;animation-delay:1.3s}.vision-lidar i:nth-child(13){left:16%;top:39%;animation-delay:2.2s}.vision-lidar i:nth-child(14){left:48%;top:14%;animation-delay:1.6s}.vision-lidar i:nth-child(15){left:88%;top:12%;animation-delay:2.8s}.vision-lidar i:nth-child(16){left:29%;top:66%;animation-delay:1s}.vision-lidar i:nth-child(17){left:78%;top:54%;animation-delay:2s}.vision-lidar i:nth-child(18){left:57%;top:33%;animation-delay:.4s}
+.vision-kicker { font-size: 10px; letter-spacing: .2em; color: #ffffff80; }
+@keyframes lidar-scan { 0%,100% { transform: translateX(0); opacity: 0; } 15%,80% { opacity: 1; } 50% { transform: translateX(82vw); } }
+@keyframes lidar-drift { to { background-position: 56px 56px, -43px 43px; } }
+@keyframes lidar-pulse { 0%,100% { transform: scale(.7); opacity: .25; } 50% { transform: scale(2.2); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .vision-lidar, .vision-lidar::before, .vision-lidar i { animation: none; } }
+
 /* Editorial display typography */
 .tf-display {
   font-family: var(--font-display);
