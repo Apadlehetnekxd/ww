@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type MouseEvent } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowLeft, ArrowUpRight, AudioLines, Check, Mic, Scan, Send, Volume2, VolumeX, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, AudioLines, Check, ExternalLink, LoaderCircle, Mic, Search, Scan, Send, Volume2, VolumeX, X } from 'lucide-react';
 import { useVisionSession } from '@/hooks/use-vision-session';
 import { VisionSheet } from '@/components/vision/vision-sheet';
 import { HandPoints } from '@/components/vision/hand-points';
-import { askVision, searchObject, snapshotFrame } from '@/lib/vision/ai-service';
+import { askVision, searchObject, searchWithLens, snapshotFrame, type LensResponse } from '@/lib/vision/ai-service';
 import { contains, frameToViewport, viewportToFrame } from '@/lib/vision/coordinates';
 import { frameSignature, usefulViewChange } from '@/lib/vision/frame-change';
 import { VoiceService } from '@/lib/vision/voice-service';
@@ -41,6 +41,9 @@ function VisionPage() {
   const [allowFollowup, setAllowFollowup] = useState(true);
   const [spoken, setSpoken] = useState(true);
   const [speechError, setSpeechError] = useState('');
+  const [lens, setLens] = useState<LensResponse | null>(null);
+  const [lensError, setLensError] = useState('');
+  const [lensBusy, setLensBusy] = useState(false);
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
   const [phoneOnly, setPhoneOnly] = useState<boolean | null>(null);
   const questionDraft = useRef(question);
@@ -190,10 +193,15 @@ function VisionPage() {
   const localHttp = !window.isSecureContext && location.port === '3000';
   const secureCameraUrl = `https://${location.hostname}:3443/vision`;
 
-  const searchCurrentView = () => {
-    const objectLabel = selected?.label || frame.objects[0]?.label || 'object in camera view';
-    const query = encodeURIComponent(`identify and search for ${objectLabel}`);
-    window.open(`https://www.google.com/search?tbm=isch&q=${query}`, '_blank', 'noopener,noreferrer');
+  const searchCurrentView = async () => {
+    const video = videoRef.current;
+    if (!video || lensBusy) return;
+    setLensBusy(true); setLensError(''); setLens(null);
+    try {
+      const label = selected?.label || frame.objects[0]?.label;
+      setLens(await searchWithLens(snapshotFrame(video, selected?.region), label));
+    } catch (error) { setLensError(error instanceof Error ? error.message : 'Visual search is temporarily unavailable.'); }
+    finally { setLensBusy(false); }
   };
 
   const sendCurrentViewToChat = () => {
@@ -349,9 +357,19 @@ function VisionPage() {
         {session.recognitionStatus && <p className="vision-fine">{session.recognitionStatus}</p>}
         <form onSubmit={submit}>
           <div className="vision-sheet-actions">
-            <button type="button" onClick={searchCurrentView}><ArrowUpRight size={16} /> Search web</button>
+            <button type="button" onClick={() => void searchCurrentView()} disabled={lensBusy}><Search size={16} /> Search photo</button>
             <button type="button" onClick={sendCurrentViewToChat}><Send size={16} /> Send to chat</button>
           </div>
+          {lensBusy && <p className="vision-fine"><LoaderCircle className="vision-spin" size={14} /> Searching visual matches…</p>}
+          {lensError && <p className="vision-question-error" role="alert">{lensError}</p>}
+          {lens && <div className="vision-lens-results" aria-label="Google Lens results">
+            {lens.knowledge?.title && <div className="vision-lens-knowledge"><strong>{lens.knowledge.title}</strong>{lens.knowledge.description && <span>{lens.knowledge.description}</span>}</div>}
+            {lens.matches.length === 0 && <p className="vision-fine">No visual matches found.</p>}
+            {lens.matches.map((match) => <a className="vision-lens-result" href={match.link} target="_blank" rel="noreferrer" key={match.link}>
+              {match.thumbnail && <img src={match.thumbnail} alt="" />}
+              <span><strong>{match.title}</strong><small>{match.source || 'Web result'}</small>{match.snippet && <em>{match.snippet}</em>}</span><ExternalLink size={14} />
+            </a>)}
+          </div>}
           <div className="vision-question-input">
             <textarea aria-label="Your question" placeholder="What am I looking at?" value={question} onChange={event => setQuestion(event.target.value)} rows={2} maxLength={2000} />
             <button type="submit" className="vision-send" disabled={!question.trim() || busy} aria-label="Send view and question"><Send size={17} /></button>
