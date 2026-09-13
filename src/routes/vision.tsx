@@ -267,14 +267,13 @@ function VisionPage() {
 
   if (phoneOnly === false) {
     return (
-      <main className="vision-app vision-auth-gate">
-        <section className="vision-entry" aria-labelledby="vision-phone-only-title">
-          <div className="vision-access-badges" aria-label="Vision access status">
-            <span>PHONE ONLY</span>
-            <span>CAMERA FEATURE</span>
-          </div>
-          <h1 id="vision-phone-only-title">VISION IS PHONE ONLY</h1>
-          <p className="vision-secondary">This feature is available only on a phone. Open Vision on an iPhone or Android phone to use the camera and hand tracking.</p>
+      <main className="vision-app vision-entry-screen vision-desktop-gate">
+        <div className="vision-entry-lidar" aria-hidden="true">{Array.from({ length: 28 }, (_, index) => <i key={index} />)}</div>
+        <section className="vision-entry vision-entry-desktop" aria-labelledby="vision-phone-only-title">
+          <div className="vision-access-badges"><span>NEURIX VISION</span><span>PHONE EXPERIENCE</span></div>
+          <h1 id="vision-phone-only-title">VISION<br /><em>IS PHONE ONLY</em></h1>
+          <p className="vision-secondary">Your phone sees more than a screen. Scan the world, ask better questions, and discover what is in front of you.</p>
+          <div className="vision-qr-panel"><div className="vision-qr-placeholder" aria-label="Scan with your phone">NEURIX<br />VISION</div><div><strong>Open Vision on your phone</strong><span>Scan to continue the experience.</span></div></div>
           <Link to="/" className="vision-back"><ArrowLeft size={12} /> Back to Neurix</Link>
         </section>
       </main>
@@ -282,7 +281,11 @@ function VisionPage() {
   }
 
   if (phoneOnly === null) {
-    return <main className="vision-app vision-auth-gate"><section className="vision-entry"><p>Checking device compatibility…</p></section></main>;
+    return <main className="vision-app vision-entry-screen"><div className="vision-entry-lidar" aria-hidden="true">{Array.from({ length: 20 }, (_, index) => <i key={index} />)}</div><section className="vision-entry"><p className="vision-kicker">INITIALIZING VISION</p><h1>Reading the room.</h1></section></main>;
+  }
+
+  if (phase === 'permission') {
+    return <main className="vision-app vision-entry-screen"><div className="vision-entry-lidar" aria-hidden="true">{Array.from({ length: 20 }, (_, index) => <i key={index} />)}</div><section className="vision-entry vision-entry-mobile" aria-labelledby="vision-meet-title"><div className="vision-access-badges"><span>NEURIX VISION</span><span>FREE TO EXPLORE</span></div><p className="vision-kicker">MEET VISION</p><h1 id="vision-meet-title">See beyond<br /><em>the obvious.</em></h1><p className="vision-secondary">Point your camera at the world. Vision turns what you see into something you can understand.</p>{localHttp ? <a className="vision-primary" href={secureCameraUrl}>Activate Vision <ArrowUpRight size={17} /></a> : <button className="vision-primary" onClick={() => void session.start()}>Activate Vision <ArrowUpRight size={17} /></button>}<p className="vision-fine">Camera access stays on this device. Your exploration starts when you choose it.</p><Link to="/" className="vision-back"><ArrowLeft size={12} /> Back to Neurix</Link></section></main>;
   }
 
   return (
