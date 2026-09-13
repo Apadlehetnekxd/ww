@@ -44,6 +44,9 @@
 .vision-primary { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; padding: 17px 20px; min-height: 54px; margin: 30px 0 18px; background: #fff; color: #000; border: 1px solid #fff; border-radius: 100px; font-size: 13px; font-weight: 550; }
 .vision-fine { font-size: 11px; line-height: 1.65; color: #ffffff70; margin: 0; }
 .vision-back { display: inline-flex; align-items: center; gap: 7px; color: #ffffff80; font-size: 11px; margin-top: 22px; padding: 8px 0; }
+.vision-depth-status { margin: 0 0 8px; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: #fff9; }
+.vision-depth-status.is-available { color: #b9ffce; }
+.vision-depth-status.is-unavailable { color: #fff7; }
 .vision-scan-status { position: absolute; z-index: 2; bottom: max(42px, calc(env(safe-area-inset-bottom) + 22px)); left: 0; right: 0; margin: 0 auto; width: min(100%, 410px); padding: 24px 32px 0; pointer-events: none; text-shadow: 0 1px 8px #000; transition: opacity 600ms ease; }
 .vision-scan-status::before { content: ''; position: absolute; inset: -80px -80px -100px; z-index: -1; background: linear-gradient(transparent, #000c 50%, #000); pointer-events: none; }
 .vision-status-title { font-size: 14px; font-weight: 450; line-height: 1.5; letter-spacing: -.01em; margin: 0 0 10px; }
