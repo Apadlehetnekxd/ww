@@ -28,6 +28,7 @@ export type VisionAnswer = { answer: string; needsMoreInfo?: string; searchQuery
 export type VisionQuestion = {
   question: string;
   image: string;
+  images?: string[];
   selectedObject: VisionObject | null;
   visibleObjects: VisionObject[];
   pointingObject: VisionObject | null;

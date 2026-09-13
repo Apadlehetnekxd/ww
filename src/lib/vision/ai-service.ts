@@ -57,7 +57,7 @@ export async function askVision(input: VisionQuestion): Promise<VisionAnswer> {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         question: input.question.trim().slice(0, 2000), image: input.image,
-        imageRegion: lastSnapshot?.image === input.image ? lastSnapshot.region : null,
+        images: input.images?.slice(0, 6), imageRegion: lastSnapshot?.image === input.image ? lastSnapshot.region : null,
         selectedObject: input.selectedObject, visibleObjects: input.visibleObjects.slice(0, 16),
         pointingObject: input.pointingObject,
         previousObservations: [...observations.values()].filter((object) => Date.now() - object.lastSeen < 90000).slice(-32),

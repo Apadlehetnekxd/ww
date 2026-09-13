@@ -3,6 +3,7 @@ import { CameraController, cameraError } from '@/lib/vision/camera-controller';
 import { MotionTracker } from '@/lib/vision/motion-tracker';
 import { ScanEngine } from '@/lib/vision/scan-engine';
 import { RecognitionController } from '@/lib/vision/recognition';
+import { snapshotFrame } from '@/lib/vision/ai-service';
 import type { RecognitionFrame, ScanMetrics } from '@/lib/vision/types';
 
 export type VisionPhase = 'permission' | 'requesting' | 'scanning' | 'understood' | 'revealing' | 'live' | 'paused' | 'error';
@@ -22,6 +23,7 @@ export function useVisionSession() {
   const recognition = useRef<RecognitionController | null>(null);
   const generation = useRef(0);
   const timers = useRef<number[]>([]);
+  const scanImages = useRef<string[]>([]);
   const phaseRef = useRef<VisionPhase>('permission');
   const [phase, setPhase] = useState<VisionPhase>('permission');
   const [metrics, setMetrics] = useState(initialMetrics);
@@ -47,7 +49,7 @@ export function useVisionSession() {
     if (!isPhone || !videoRef.current || !canvasRef.current || phaseRef.current === 'requesting') return;
     release();
     const version = generation.current;
-    setError(''); setFrame(emptyFrame); setMetrics(initialMetrics); setRecognitionStatus('');
+    setError(''); setFrame(emptyFrame); setMetrics(initialMetrics); setRecognitionStatus(''); scanImages.current = [];
     changePhase('requesting');
     // iOS motion permission must be requested directly inside this user gesture.
     const orientation = window.DeviceOrientationEvent as OrientationPermission | undefined;
@@ -78,6 +80,11 @@ export function useVisionSession() {
       await scan.start();
       if (version !== generation.current) { scan.stop(); return; }
       changePhase('scanning');
+      const captureTimer = window.setInterval(() => {
+        if (phaseRef.current !== 'scanning' || video.readyState < 2) return;
+        try { const image = snapshotFrame(video); if (!scanImages.current.includes(image)) scanImages.current = [...scanImages.current.slice(-5), image]; } catch { /* camera can be between frames */ }
+      }, 360);
+      timers.current.push(captureTimer);
       const detector = new RecognitionController(video, next => {
         if (version !== generation.current) return;
         setFrame(next);
@@ -140,5 +147,5 @@ export function useVisionSession() {
   }, [changePhase, release]);
 
   const requestAnalysis = useCallback(() => recognition.current?.requestAnalysis(), []);
-  return { videoRef, canvasRef, phase, metrics, frame, error, recognitionStatus, start, requestAnalysis };
+  return { videoRef, canvasRef, phase, metrics, frame, error, recognitionStatus, scanImages, start, requestAnalysis };
 }
