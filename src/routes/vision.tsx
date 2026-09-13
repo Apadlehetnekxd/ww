@@ -197,7 +197,7 @@ function VisionPage() {
   const fallbackId = frame.pointing ? rankPointingTarget(frame.pointing, frame.objects, null, videoRef.current && videoRef.current.videoHeight ? videoRef.current.videoWidth / videoRef.current.videoHeight : 1) : null;
   const detectedTarget = pointed ?? frame.objects.find(object => object.id === fallbackId) ?? null;
   const pointingTarget = frame.pointing ? (() => {
-    const distance = 0.34;
+    const distance = 0.42;
     const x = Math.max(0.08, Math.min(0.92, frame.pointing.origin.x + frame.pointing.direction.x * distance));
     const y = Math.max(0.12, Math.min(0.82, frame.pointing.origin.y + frame.pointing.direction.y * distance));
     return { id: 'pointing-target', type: 'pointed-object', label: detectedTarget?.label || 'Tap to identify', confidence: detectedTarget?.confidence || 0.25, firstSeen: 0, lastSeen: Date.now(), observations: 1, region: { x: x - 0.09, y: y - 0.09, width: 0.18, height: 0.18 } } satisfies VisionObject;

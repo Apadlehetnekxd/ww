@@ -77,13 +77,13 @@ export function pointingRayFromHand(hand: Landmark[], aspect = 1): PointingRay |
   const segmentB = { x: tip.x - joint.x, y: tip.y - joint.y };
   const a = Math.hypot(segmentA.x, segmentA.y), b = Math.hypot(segmentB.x, segmentB.y);
   const straightness = (segmentA.x * segmentB.x + segmentA.y * segmentB.y) / Math.max(0.0001, a * b);
-  if (a < 0.012 || b < 0.025 || straightness < 0.65 || distance(wrist, tip) < distance(wrist, joint) * 1.1) return null;
-  // An open hand is not a pointing gesture. At least two other fingers should be curled.
-  const curled = [[10, 12], [14, 16], [18, 20]].filter(([pip, end]) => distance(wrist, p(end)) < distance(wrist, p(pip)) * 1.16).length;
-  if (curled < 2) return null;
-  const dx = hand[8].x - hand[6].x, dy = hand[8].y - hand[6].y;
+  if (a < 0.008 || b < 0.012 || distance(wrist, tip) < distance(wrist, joint) * 1.02) return null;
+  // Prefer a clearly curled-hand gesture, but keep a usable ray for imperfect mobile landmarks.
+  const curled = [[10, 12], [14, 16], [18, 20]].filter(([pip, end]) => distance(wrist, p(end)) < distance(wrist, p(pip)) * 1.2).length;
+  if (straightness < 0.35 && curled < 1) return null;
+  const dx = hand[8].x - hand[5].x, dy = hand[8].y - hand[5].y;
   const length = Math.hypot(dx, dy);
-  if (length < 0.025) return null;
+  if (length < 0.018) return null;
   return { origin: { x: hand[8].x, y: hand[8].y }, direction: { x: dx / length, y: dy / length } };
 }
 
