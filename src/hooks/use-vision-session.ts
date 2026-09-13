@@ -4,6 +4,7 @@ import { MotionTracker } from '@/lib/vision/motion-tracker';
 import { ScanEngine } from '@/lib/vision/scan-engine';
 import { RecognitionController } from '@/lib/vision/recognition';
 import { snapshotFrame } from '@/lib/vision/ai-service';
+import { isNativeLidar, NativeLidar } from '@/lib/vision/native-lidar';
 import type { RecognitionFrame, ScanMetrics } from '@/lib/vision/types';
 
 export type VisionPhase = 'permission' | 'requesting' | 'scanning' | 'understood' | 'revealing' | 'live' | 'paused' | 'error';
@@ -109,6 +110,19 @@ export function useVisionSession() {
   }, [changePhase, release]);
 
   useEffect(() => {
+    if (!isNativeLidar) return;
+    let remove: (() => Promise<void>) | undefined;
+    void NativeLidar.start().then(() => {
+      setDepthStatus('available');
+      return NativeLidar.addListener('depthUpdate', event => {
+        window.dispatchEvent(new CustomEvent('neurix:lidar-depth', { detail: event }));
+      });
+    }).then(listener => { remove = listener.remove; }).catch(() => setDepthStatus('unavailable'));
+    return () => { void remove?.(); void NativeLidar.stop().catch(() => undefined); };
+  }, []);
+
+  useEffect(() => {
+    if (isNativeLidar) return;
     let cancelled = false;
     const xr = (navigator as Navigator & { xr?: { isSessionSupported?: (mode: string) => Promise<boolean> } }).xr;
     if (!xr?.isSessionSupported) { setDepthStatus('unavailable'); return; }

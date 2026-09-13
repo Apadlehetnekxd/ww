@@ -85,7 +85,7 @@ async function webGpu(canvas: HTMLCanvasElement): Promise<PointCloudRenderer | n
         activeDevice.queue.writeBuffer(screen, 0, uniforms.buffer);
         if (count) activeDevice.queue.writeBuffer(vertices, 0, points.buffer as ArrayBuffer, points.byteOffset, count * stride);
         const encoder = activeDevice.createCommandEncoder();
-        const pass = encoder.beginRenderPass({ colorAttachments: [{ view: context.getCurrentTexture().createView(), clearValue: { r: 0, g: 0, b: 0, a: 1 }, loadOp: 'clear', storeOp: 'store' }] });
+        const pass = encoder.beginRenderPass({ colorAttachments: [{ view: context.getCurrentTexture().createView(), clearValue: { r: 0, g: 0, b: 0, a: 0 }, loadOp: 'clear', storeOp: 'store' }] });
         pass.setPipeline(pipeline);
         pass.setBindGroup(0, bindGroup);
         pass.setVertexBuffer(0, vertices);
@@ -102,7 +102,7 @@ async function webGpu(canvas: HTMLCanvasElement): Promise<PointCloudRenderer | n
 }
 
 function webGl(canvas: HTMLCanvasElement): PointCloudRenderer | null {
-  const gl = canvas.getContext('webgl', { alpha: false, antialias: false, powerPreference: 'low-power', preserveDrawingBuffer: false });
+  const gl = canvas.getContext('webgl', { alpha: true, antialias: false, powerPreference: 'low-power', preserveDrawingBuffer: false });
   if (!gl) return null;
   const shader = (type: number, source: string) => {
     const compiled = gl.createShader(type)!;
@@ -130,7 +130,7 @@ function webGl(canvas: HTMLCanvasElement): PointCloudRenderer | null {
   gl.vertexAttribPointer(point, 4, gl.FLOAT, false, stride, 0);
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-  gl.clearColor(0, 0, 0, 1);
+  gl.clearColor(0, 0, 0, 0);
   return {
     render(points) {
       if (gl.isContextLost()) return;
@@ -160,8 +160,7 @@ export async function createPointCloudRenderer(canvas: HTMLCanvasElement): Promi
     render(points) {
       const { width, height, pixelRatio } = dimensions(canvas);
       context.globalAlpha = 1;
-      context.fillStyle = '#000';
-      context.fillRect(0, 0, width, height);
+      context.clearRect(0, 0, width, height);
       context.fillStyle = '#fff';
       const skip = Math.max(1, Math.ceil(points.length / 4 / 14000));
       for (let p = 0; p < points.length; p += 4 * skip) {

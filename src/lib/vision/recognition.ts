@@ -76,10 +76,9 @@ export class RecognitionController {
         const nextHand = validHands[0] ?? null;
         if (nextHand) {
           this.handCandidates++;
-          if (!this.hand || this.handCandidates >= 2) {
-            this.hand = nextHand;
-            this.handSeen = performance.now();
-          }
+          this.hand = this.hand ? this.smoothHand(this.hand, nextHand, 0.78) : nextHand;
+          this.handCandidates = Math.min(this.handCandidates, 1);
+          this.handSeen = performance.now();
         } else {
           this.handCandidates = 0;
           if (performance.now() - this.handSeen > 650) this.hand = null;
@@ -88,8 +87,8 @@ export class RecognitionController {
         const next = validHands.map((hand) => pointingRayFromHand(hand, aspect)).find(Boolean) ?? null;
         if (next) {
           if (this.pointing && next.direction.x * this.pointing.direction.x + next.direction.y * this.pointing.direction.y > 0.5) {
-            const dx = this.pointing.direction.x * 0.3 + next.direction.x * 0.7;
-            const dy = this.pointing.direction.y * 0.3 + next.direction.y * 0.7;
+            const dx = this.pointing.direction.x * 0.12 + next.direction.x * 0.88;
+            const dy = this.pointing.direction.y * 0.12 + next.direction.y * 0.88;
             const length = Math.hypot(dx, dy);
             this.pointing = {
               origin: { x: this.pointing.origin.x * 0.3 + next.origin.x * 0.7, y: this.pointing.origin.y * 0.3 + next.origin.y * 0.7 },
@@ -97,11 +96,18 @@ export class RecognitionController {
             };
           } else this.pointing = next;
           this.lastPointing = performance.now();
-        } else if (performance.now() - this.lastPointing > 400) this.pointing = null;
+        } else if (performance.now() - this.lastPointing > 650) this.pointing = null;
       }
     }
     this.emit();
     this.schedule(60);
+  }
+
+  private smoothHand(previous: Point2[], next: Point2[], weight: number): Point2[] {
+    return next.map((point, index) => ({
+      x: previous[index].x * (1 - weight) + point.x * weight,
+      y: previous[index].y * (1 - weight) + point.y * weight,
+    }));
   }
 
   private emit(): void {
@@ -124,8 +130,8 @@ export class RecognitionController {
       this.schedule(180); return;
     }
     const now = performance.now();
-    const objectInterval = Math.max(this.pointing ? 650 : 1100, Math.min(2200, this.averageCost * 3));
-    const handInterval = Math.max(this.hand ? 110 : 220, Math.min(650, this.averageCost * 1.3));
+    const objectInterval = Math.max(this.pointing ? 420 : 850, Math.min(1800, this.averageCost * 2.2));
+    const handInterval = Math.max(this.hand ? 35 : 70, Math.min(300, this.averageCost * 0.7));
     const objects = this.objectsEnabled && now - this.lastObjects >= objectInterval;
     const hands = this.handsEnabled && now - this.lastHands >= handInterval;
     if (!objects && !hands) { this.schedule(65); return; }

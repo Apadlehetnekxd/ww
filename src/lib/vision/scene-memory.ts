@@ -77,7 +77,7 @@ export function pointingRayFromHand(hand: Landmark[], aspect = 1): PointingRay |
   const segmentB = { x: tip.x - joint.x, y: tip.y - joint.y };
   const a = Math.hypot(segmentA.x, segmentA.y), b = Math.hypot(segmentB.x, segmentB.y);
   const straightness = (segmentA.x * segmentB.x + segmentA.y * segmentB.y) / Math.max(0.0001, a * b);
-  if (a < 0.008 || b < 0.012 || distance(wrist, tip) < distance(wrist, joint) * 1.02) return null;
+  if (a < 0.005 || b < 0.008 || distance(wrist, tip) < distance(wrist, joint) * 0.98) return null;
   // Prefer a clearly curled-hand gesture, but keep a usable ray for imperfect mobile landmarks.
   const curled = [[10, 12], [14, 16], [18, 20]].filter(([pip, end]) => distance(wrist, p(end)) < distance(wrist, p(pip)) * 1.2).length;
   if (straightness < 0.35 && curled < 1) return null;
@@ -121,7 +121,7 @@ export function rankPointingTarget(ray: PointingRay, objects: VisionObject[], pr
     const radius = Math.abs(d.y) * object.region.width * aspect / 2 + Math.abs(d.x) * object.region.height / 2;
     const gap = Math.max(0, cross - radius);
     const entry = rayEntry(ray, object.region);
-    if (entry === null && gap > 0.12) continue;
+    if (entry === null && gap > 0.2) continue;
     const score = (entry !== null ? 1.0 : 0.4) - gap * 5 - along * 0.25 + object.confidence * 0.3
       - object.region.width * object.region.height * 0.25 + (object.id === previous ? 0.18 : 0);
     if (score > bestScore) { bestId = object.id; bestScore = score; }
@@ -138,7 +138,7 @@ export class PointingSelection {
     if (!objects.some((object) => object.id === this.selected)) this.selected = null;
     const candidate = ray ? rankPointingTarget(ray, objects, this.selected, aspect) : null;
     if (candidate !== this.candidate) { this.candidate = candidate; this.since = now; }
-    if (now - this.since >= (candidate ? 140 : 500)) this.selected = candidate;
+    if (now - this.since >= (candidate ? 100 : 500)) this.selected = candidate;
     return this.selected;
   }
 
