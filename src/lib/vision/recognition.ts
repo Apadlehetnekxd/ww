@@ -29,7 +29,7 @@ export class RecognitionController {
   private plausibleHand(landmarks: (Point2 & { z?: number })[]) {
     if (landmarks.length < 21 || landmarks.some(point => point.x < 0 || point.x > 1 || point.y < 0 || point.y > 1)) return false;
     const distance = (a: number, b: number) => Math.hypot(landmarks[a].x - landmarks[b].x, landmarks[a].y - landmarks[b].y);
-    return distance(0, 9) > 0.045 && distance(5, 17) > 0.035 && distance(0, 8) > 0.08;
+    return distance(0, 9) > 0.025 && distance(5, 17) > 0.02 && distance(0, 8) > 0.045;
   }
 
   constructor(
