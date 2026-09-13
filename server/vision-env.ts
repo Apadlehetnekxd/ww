@@ -5,6 +5,6 @@ export function visionEnvironment(env: Record<string, string | undefined> = proc
   return {
     OPENROUTER_API_KEY: env.OPENROUTER_API_KEY || env.VITE_OPENROUTER_API_KEY,
     ELEVENLABS_API_KEY: env.ELEVENLABS_API_KEY,
-    VISION_MODEL: env.VISION_MODEL || env.VITE_VISION_MODEL || 'google/gemini-2.5-flash',
+    VISION_MODEL: env.VISION_MODEL || env.VITE_VISION_MODEL || 'google/gemini-3.7-flash',
   };
 }
