@@ -94,10 +94,11 @@ export async function handleVisionRequest(request: Request, env: VisionEnvironme
       method: 'POST', signal: abort.signal, headers,
       body: requestBody(env.VISION_MODEL.trim()),
     });
-    if (upstream.status === 402 && env.VISION_MODEL.trim() !== 'openrouter/free') {
+    const configuredModel = env.VISION_MODEL.trim();
+    if ([400, 404, 402].includes(upstream.status) && configuredModel !== 'google/gemini-3.7-flash') {
       upstream = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST', signal: abort.signal, headers,
-        body: requestBody('openrouter/free'),
+        body: requestBody('google/gemini-3.7-flash'),
       });
     }
     if (!upstream.ok) {
