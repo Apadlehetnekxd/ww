@@ -247,8 +247,8 @@ function VisionPage() {
             <span>PHONE ONLY</span>
             <span>CAMERA FEATURE</span>
           </div>
-          <h1 id="vision-phone-only-title">Neurix Vision works on phones only.</h1>
-          <p className="vision-secondary">Open Vision on an iPhone or Android phone to use the camera and hand tracking.</p>
+          <h1 id="vision-phone-only-title">VISION IS PHONE ONLY</h1>
+          <p className="vision-secondary">This feature is available only on a phone. Open Vision on an iPhone or Android phone to use the camera and hand tracking.</p>
           <Link to="/" className="vision-back"><ArrowLeft size={12} /> Back to Neurix</Link>
         </section>
       </main>
