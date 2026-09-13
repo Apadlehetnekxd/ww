@@ -61,11 +61,11 @@
 .vision-instruction { color: #ffffff8c; font-size: 11px; line-height: 1.6; margin: 19px 0 0; min-height: 18px; }
 .vision-app[data-phase='revealing'] .vision-scan-status { opacity: 0; }
 .vision-touch-surface { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; }
-.vision-object-label { position: absolute; z-index: 5; display: flex; align-items: center; min-height: 44px; min-width: 44px; padding: 8px 10px; max-width: 180px; border: 1px solid #ffffff45; border-radius: 999px; background: #000b; color: #fff; transform: translate(-50%, -50%); transition: left 220ms linear, top 220ms linear; text-shadow: 0 1px 7px #000; pointer-events: auto; cursor: pointer; }
+.vision-object-label { position: absolute; z-index: 8; display: flex; align-items: center; min-height: 48px; min-width: 48px; padding: 9px 12px; max-width: 180px; border: 1px solid #ffffff60; border-radius: 999px; background: #050505e8; color: #fff; transform: translate(-50%, -50%); transition: left 90ms linear, top 90ms linear; text-shadow: 0 1px 7px #000; pointer-events: auto; cursor: pointer; touch-action: manipulation; }
 .vision-object-secondary { opacity: .92; }
 .vision-object-label.is-selected { border-color: #fff; background: #fff; color: #000; box-shadow: 0 0 0 3px #ffffff40, 0 0 28px #fff8; }
 .vision-object-label.is-selected .vision-object-name { color: #000; text-shadow: none; }
-.vision-selection-box { position: absolute; z-index: 4; pointer-events: none; border: 1px solid #fff; box-shadow: 0 0 0 1px #ffffff40, 0 0 22px #fff8; transition: left 220ms linear, top 220ms linear, width 220ms linear, height 220ms linear; }
+.vision-selection-box { position: absolute; z-index: 7; pointer-events: none; border: 2px solid #fff; border-radius: 12px; box-shadow: 0 0 0 1px #ffffff70, 0 0 26px #fff9, inset 0 0 18px #fff2; transition: left 90ms linear, top 90ms linear, width 90ms linear, height 90ms linear; }
 .vision-selection-box span { position: absolute; width: 16px; height: 16px; border-color: #fff; border-style: solid; }
 .vision-selection-box span:nth-child(1) { top: -2px; left: -2px; border-width: 2px 0 0 2px; }
 .vision-selection-box span:nth-child(2) { top: -2px; right: -2px; border-width: 2px 2px 0 0; }
