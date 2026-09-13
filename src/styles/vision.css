@@ -27,6 +27,10 @@
 .vision-video, .vision-points { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center; pointer-events: none; }
 .vision-video { opacity: 0; transform: none; transition: opacity 400ms cubic-bezier(.4, 0, .2, 1); }
 .vision-points { opacity: 1; background: transparent; transition: opacity 400ms cubic-bezier(.4, 0, .2, 1); }
+.vision-app[data-phase='scanning'][data-depth='available'] .vision-video { opacity: .42; filter: saturate(.72) contrast(1.08); }
+.vision-app[data-phase='scanning'][data-depth='available'] .vision-points { opacity: 1; mix-blend-mode: screen; }
+.vision-app[data-phase='scanning'][data-depth='available']::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% 48%, transparent 0 28%, #050b0c22 72%), linear-gradient(90deg, transparent 49.8%, #b9ffce18 50%, transparent 50.2%); mix-blend-mode: screen; }
+.vision-app[data-phase='scanning'][data-depth='available'] .vision-scan-status { color: #d6ffe0; }
 .vision-hand-points { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; transition: opacity 400ms ease; }
 .vision-app[data-phase='scanning'] .vision-video,
 .vision-app[data-phase='understood'] .vision-video,
