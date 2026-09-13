@@ -59,6 +59,16 @@
 .vision-sheet-actions button:first-child { background: #fff; color: #000; border-color: #fff; }
 .vision-answer { font-size: 13px; line-height: 1.8; white-space: pre-wrap; margin: 0 0 20px; color: #ffffffdf; }
 .vision-question-error { color: #fff; border-left: 1px solid #ffffff70; padding-left: 12px; font-size: 12px; line-height: 1.7; margin-bottom: 18px; }
+.vision-lens-results { display: grid; gap: 8px; margin: 0 0 14px; }
+.vision-lens-knowledge { display: grid; gap: 5px; padding: 12px; border: 1px solid #ffffff20; border-radius: 14px; font-size: 12px; line-height: 1.5; }
+.vision-lens-knowledge span { color: #ffffff90; font-size: 11px; }
+.vision-lens-result { display: grid; grid-template-columns: 48px 1fr auto; align-items: center; gap: 10px; min-height: 58px; padding: 7px; border: 1px solid #ffffff16; border-radius: 13px; color: #fff; text-decoration: none; }
+.vision-lens-result img { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; background: #ffffff10; }
+.vision-lens-result span { min-width: 0; display: grid; gap: 2px; }
+.vision-lens-result strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.vision-lens-result small, .vision-lens-result em { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #ffffff65; font-size: 10px; font-style: normal; }
+.vision-spin { animation: vision-spin 900ms linear infinite; vertical-align: middle; margin-right: 5px; }
+@keyframes vision-spin { to { transform: rotate(360deg); } }
 .vision-question-input { position: relative; margin-top: 15px; }
 .vision-question-input textarea { width: 100%; border: 1px solid #ffffff26; border-radius: 15px; padding: 15px 55px 15px 15px; background: #ffffff05; color: #fff; resize: vertical; min-height: 88px; max-height: 140px; font: inherit; font-size: 16px; line-height: 1.5; }
 .vision-question-input textarea::placeholder { color: #ffffff50; }

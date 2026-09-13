@@ -7,6 +7,7 @@ import { Readable } from 'node:stream';
 import { readFileSync, existsSync } from 'node:fs';
 import { handleVisionRequest, type VisionEnvironment } from './server/vision-handler';
 import { handleTtsRequest } from './server/tts-handler';
+import { handleLensRequest, lensEnvironment } from './server/lens-handler';
 import { visionEnvironment } from './server/vision-env';
 
 function localApi(path: string, handle: (request: Request, env: VisionEnvironment) => Promise<Response>, env: VisionEnvironment): Plugin {
@@ -52,6 +53,7 @@ export default defineConfig(({ mode }) => {
       react(), tailwindcss(), tsconfigPaths(),
       localApi('/api/vision', handleVisionRequest, visionEnvironment(env)),
       localApi('/api/tts', handleTtsRequest, visionEnvironment(env)),
+      localApi('/api/lens', handleLensRequest, lensEnvironment(env)),
     ],
     server: {
       host: '0.0.0.0', port: phone ? 3443 : 3000, strictPort: true,

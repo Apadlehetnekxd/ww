@@ -75,6 +75,20 @@ export async function askVision(input: VisionQuestion): Promise<VisionAnswer> {
   } finally { clearTimeout(timeout); input.signal?.removeEventListener('abort', abort); }
 }
 
+export type LensMatch = { title: string; link: string; source?: string; thumbnail?: string; snippet?: string };
+export type LensResponse = { matches: LensMatch[]; knowledge?: { title?: string; description?: string; source?: string; link?: string } | null };
+
+export async function searchWithLens(image: string, label?: string, signal?: AbortSignal): Promise<LensResponse> {
+  const response = await fetch('/api/lens', {
+    method: 'POST', credentials: 'same-origin', signal,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ image, label }),
+  });
+  const payload = await response.json().catch(() => null) as (LensResponse & { error?: string }) | null;
+  if (!response.ok) throw new Error(payload?.error || 'Visual search is temporarily unavailable.');
+  return { matches: Array.isArray(payload?.matches) ? payload.matches : [], knowledge: payload?.knowledge || null };
+}
+
 /** An explicit external search, not a claim that the assistant has read results. */
 export function searchObject(object: VisionObject): string {
   return `https://www.google.com/search?q=${encodeURIComponent(object.label.slice(0, 160))}`;
