@@ -1,0 +1,323 @@
+import { useCallback, useEffect, useRef, useState, type FormEvent, type MouseEvent } from 'react';
+import { createFileRoute, Link } from '@tanstack/react-router';
+import { ArrowLeft, ArrowUpRight, AudioLines, Check, Mic, Scan, Send, Volume2, VolumeX, X } from 'lucide-react';
+import { useVisionSession } from '@/hooks/use-vision-session';
+import { VisionSheet } from '@/components/vision/vision-sheet';
+import { HandPoints } from '@/components/vision/hand-points';
+import { askVision, searchObject, snapshotFrame } from '@/lib/vision/ai-service';
+import { contains, frameToViewport, viewportToFrame } from '@/lib/vision/coordinates';
+import { frameSignature, usefulViewChange } from '@/lib/vision/frame-change';
+import { VoiceService } from '@/lib/vision/voice-service';
+import { useAuth } from '@/hooks/use-auth';
+import type { VisionObject, VisionTurn } from '@/lib/vision/types';
+import '@/styles/vision.css';
+
+export const Route = createFileRoute('/vision')({ component: VisionPage });
+
+type PendingView = { question: string; instruction: string; signature: number[]; attempts: number; object: VisionObject | null };
+
+function VisionPage() {
+  const { user, loading: authLoading } = useAuth();
+  const session = useVisionSession();
+  const { phase, metrics, frame, videoRef, canvasRef } = session;
+  const stage = useRef<HTMLElement>(null);
+  const voice = useRef(new VoiceService());
+  const request = useRef<AbortController | null>(null);
+  const voiceSubmitTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const history = useRef<VisionTurn[]>([]);
+  const pending = useRef<PendingView | null>(null);
+  const currentFrame = useRef(frame);
+  currentFrame.current = frame;
+  const [selected, setSelected] = useState<VisionObject | null>(null);
+  const [sheet, setSheet] = useState<'object' | 'ask' | null>(null);
+  const [tools, setTools] = useState(false);
+  const [hint, setHint] = useState(false);
+  const [question, setQuestion] = useState('');
+  const [answer, setAnswer] = useState('');
+  const [questionError, setQuestionError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [followup, setFollowup] = useState('');
+  const [allowFollowup, setAllowFollowup] = useState(true);
+  const [spoken, setSpoken] = useState(true);
+  const [speechError, setSpeechError] = useState('');
+  const [viewport, setViewport] = useState({ width: 0, height: 0 });
+  const questionDraft = useRef(question);
+
+  useEffect(() => {
+    const observer = new ResizeObserver(entries => {
+      const bounds = entries[0].contentRect;
+      setViewport({ width: bounds.width, height: bounds.height });
+    });
+    if (stage.current) observer.observe(stage.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (phase !== 'live') {
+      request.current?.abort(); request.current = null;
+      voice.current.stop(); pending.current = null; history.current = [];
+      setBusy(false); setListening(false); setSheet(null); setTools(false);
+      setAnswer(''); setFollowup(''); setSelected(null);
+      return;
+    }
+    setHint(true);
+    const timer = window.setTimeout(() => setHint(false), 5500);
+    return () => window.clearTimeout(timer);
+  }, [phase]);
+
+  useEffect(() => {
+    if (!tools) return;
+    const timer = window.setTimeout(() => setTools(false), 7000);
+    return () => window.clearTimeout(timer);
+  }, [tools]);
+
+  useEffect(() => {
+    if (!followup || busy || pending.current) return;
+    const timer = window.setTimeout(() => setFollowup(''), 8000);
+    return () => window.clearTimeout(timer);
+  }, [followup, busy]);
+
+  useEffect(() => () => {
+    clearTimeout(voiceSubmitTimer.current);
+    request.current?.abort(); voice.current.stop();
+  }, []);
+
+  const closeSheet = useCallback(() => {
+    setSheet(null); voice.current.stop(); setListening(false);
+    // Asking for another view continues in the camera. Other requests can be
+    // explicitly stopped using the small contextual stop button.
+  }, []);
+
+  const ask = useCallback(async (text: string, object: VisionObject | null, previous?: PendingView) => {
+    const video = videoRef.current;
+    if (!video || request.current || !text.trim()) return;
+    const controller = new AbortController();
+    request.current = controller;
+    setBusy(true); setQuestionError(''); setFollowup(''); pending.current = null;
+    session.requestAnalysis();
+    try {
+      const objects = currentFrame.current.objects;
+      const latestObject = objects.find(item => item.id === object?.id) ?? object;
+      const prompt = previous ? `${text}\nNew view provided in response to: ${previous.instruction}` : text;
+      const signature = frameSignature(video);
+      const result = await askVision({
+        question: prompt,
+        image: snapshotFrame(video),
+        selectedObject: latestObject,
+        visibleObjects: objects,
+        pointingObject: objects.find(item => item.id === currentFrame.current.selectedId) ?? null,
+        history: history.current.slice(-12), signal: controller.signal,
+      });
+      if (controller.signal.aborted) return;
+      history.current = [...history.current, { role: 'user' as const, content: prompt }, { role: 'assistant' as const, content: result.answer }].slice(-16);
+      setAnswer(result.answer);
+      if (spoken) voice.current.speak(result.needsMoreInfo || result.answer, setSpeechError, undefined, false);
+      if (result.needsMoreInfo) {
+        const attempts = previous?.attempts ?? 0;
+        setFollowup(result.needsMoreInfo);
+        if (allowFollowup && attempts < 3) {
+          pending.current = { question: text, instruction: result.needsMoreInfo, signature, attempts, object: latestObject };
+          setSheet(null);
+        } else {
+          setQuestion(text); setSheet('ask');
+        }
+      } else {
+        pending.current = null; setFollowup(result.answer); setSheet(null);
+      }
+    } catch (cause) {
+      if (!controller.signal.aborted) {
+        setQuestionError(cause instanceof Error ? cause.message : 'This view could not be analyzed. Please try again.');
+        setSheet('ask');
+      }
+    } finally {
+      if (request.current === controller) { request.current = null; setBusy(false); }
+    }
+  }, [allowFollowup, session.requestAnalysis, spoken, videoRef]);
+
+  useEffect(() => {
+    if (phase !== 'live') return;
+    const timer = window.setInterval(() => {
+      const next = pending.current;
+      const video = videoRef.current;
+      if (!next || !video || request.current || document.hidden) return;
+      if (usefulViewChange(next.signature, frameSignature(video))) {
+        pending.current = null;
+        void ask(next.question, next.object, { ...next, attempts: next.attempts + 1 });
+      }
+    }, 1600);
+    return () => window.clearInterval(timer);
+  }, [ask, phase, videoRef]);
+
+  const stopQuestion = () => {
+    clearTimeout(voiceSubmitTimer.current);
+    request.current?.abort(); request.current = null;
+    pending.current = null; voice.current.stop(); setBusy(false); setListening(false); setFollowup('');
+  };
+
+  const openAsk = (object: VisionObject | null = selected, inspect = false) => {
+    stopQuestion();
+    setSelected(object); setAnswer(''); setQuestionError('');
+    setQuestion(inspect ? 'Inspect this object. Describe only what is visible, and ask for another view if needed.' : '');
+    setSheet('ask'); setTools(false); setHint(false);
+  };
+
+  const onCameraTap = (event: MouseEvent<HTMLButtonElement>) => {
+    if (!videoRef.current || !stage.current) return;
+    const bounds = stage.current.getBoundingClientRect();
+    const point = viewportToFrame({ x: event.clientX - bounds.left, y: event.clientY - bounds.top }, videoRef.current, bounds);
+    const object = frame.objects.filter(item => contains(item.region, point)).sort((a, b) => a.region.width * a.region.height - b.region.width * b.region.height)[0];
+    if (object) { setSelected(object); setSheet('object'); setTools(false); }
+    else setTools(value => !value);
+    setHint(false); session.requestAnalysis();
+  };
+
+  const pointed = frame.objects.find(object => object.id === frame.selectedId);
+  const target = pointed ?? null;
+  const targetPosition = target && videoRef.current && stage.current
+    ? frameToViewport({ x: target.region.x + target.region.width / 2, y: target.region.y + target.region.height / 2 }, videoRef.current, stage.current.getBoundingClientRect()) : null;
+  const targetVisible = targetPosition && targetPosition.x >= 12 && targetPosition.x <= viewport.width - 12 && targetPosition.y >= 24 && targetPosition.y <= viewport.height - 80;
+  const progress = Math.round(metrics.progress * 100);
+  const scanning = ['scanning', 'understood', 'revealing'].includes(phase);
+  const localHttp = !window.isSecureContext && location.port === '3000';
+  const secureCameraUrl = `https://${location.hostname}:3443/vision`;
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault(); setSpeechError('');
+    if (spoken) voice.current.unlock();
+    setSheet(null); void ask(question, selected);
+  };
+  const readAloud = () => { setSpeechError(''); voice.current.speak(followup || answer, setSpeechError); };
+  const listen = () => {
+    if (listening) { voice.current.stop(); setListening(false); return; }
+    setSpoken(true); setListening(true); setQuestionError('');
+    questionDraft.current = '';
+    setQuestion('');
+    voice.current.listen(
+      text => { questionDraft.current = text; setQuestion(text); },
+      () => {
+        setListening(false);
+        clearTimeout(voiceSubmitTimer.current);
+        voiceSubmitTimer.current = setTimeout(() => {
+          const text = questionDraft.current.trim();
+          if (!text || request.current || busy) return;
+          setSpeechError('');
+          setSheet(null);
+          void ask(text, selected);
+        }, 350);
+      },
+      setQuestionError,
+    );
+  };
+
+  if (authLoading) {
+    return <main className="vision-app vision-auth-gate"><section className="vision-entry"><p>Checking member access…</p></section></main>;
+  }
+
+  if (!user) {
+    return (
+      <main className="vision-app vision-auth-gate">
+        <section className="vision-entry" aria-labelledby="vision-member-title">
+          <div className="vision-access-badges" aria-label="Vision access status">
+            <span>PRIVATE BETA</span>
+            <span>MEMBER ONLY</span>
+          </div>
+          <h1 id="vision-member-title">Neurix Vision is for members.</h1>
+          <p className="vision-secondary">Sign in to access the camera, hand tracking, and real-time Vision tools.</p>
+          <Link to="/auth" className="vision-primary">Sign in to continue <ArrowUpRight size={17} /></Link>
+          <Link to="/" className="vision-back"><ArrowLeft size={12} /> Back to Neurix</Link>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <main ref={stage} className="vision-app" data-phase={phase} aria-label="Neurix Vision">
+      <video ref={videoRef} className="vision-video" autoPlay playsInline muted disablePictureInPicture aria-label="Live camera" />
+      <canvas ref={canvasRef} className="vision-points" aria-label="Camera-derived point cloud" />
+      {(scanning || phase === 'live') && <HandPoints hand={frame.hand ?? null} video={videoRef.current} />}
+
+      {['permission', 'requesting', 'error', 'paused'].includes(phase) && (
+        <section className="vision-entry" aria-live="polite">
+          {phase === 'permission' && <>
+            <div className="vision-access-badges" aria-label="Vision access status">
+              <span>PRIVATE BETA</span>
+              <span>MEMBER ONLY</span>
+            </div>
+            <p className="vision-secondary">Neurix needs the camera and microphone to begin scanning.</p>
+            {localHttp ? <>
+              <a className="vision-primary" href={secureCameraUrl}>Open secure camera <ArrowUpRight size={17} /></a>
+              <a className="vision-back" href="/phone.html">First time on this phone? Set up camera access.</a>
+            </> : <button className="vision-primary" onClick={() => void session.start()}>Open camera <ArrowUpRight size={17} /></button>}
+            <p className="vision-fine">Scanning stays on this device. Voice starts only when you choose it.</p>
+            <Link to="/" className="vision-back"><ArrowLeft size={12} /> Back to Neurix</Link>
+          </>}
+          {phase === 'requesting' && <><p>Waiting for camera access</p><p className="vision-secondary">Allow access in your browser to begin.</p></>}
+          {phase === 'error' && <><p>Let’s get your camera ready.</p><p className="vision-secondary">{session.error}</p><button className="vision-primary" onClick={() => void session.start()}>Try again <ArrowUpRight size={17} /></button><Link to="/" className="vision-back">Back to Neurix</Link></>}
+          {phase === 'paused' && <><p>Camera paused</p><p className="vision-secondary">Your camera is off. Resume to scan a fresh view.</p><button className="vision-primary" onClick={() => void session.start()}>Resume camera <ArrowUpRight size={17} /></button><Link to="/" className="vision-back">Back to Neurix</Link></>}
+        </section>
+      )}
+
+      {scanning && <section className="vision-scan-status">
+        <p className="vision-status-title" aria-live="polite">{phase === 'scanning' ? 'Scanning environment' : 'Environment understood'}</p>
+        <p className="vision-progress-copy">{progress}% complete • {100 - progress}% remaining</p>
+        <div className="vision-progress" role="progressbar" aria-label="Environment scan" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+          <span style={{ transform: `scaleX(${metrics.progress})` }} />
+        </div>
+        <p className="vision-instruction">{phase === 'scanning' ? metrics.instruction : ' '}</p>
+      </section>}
+
+      {phase === 'live' && <>
+        <button className="vision-touch-surface" aria-label="Explore camera view" onClick={onCameraTap} />
+        {target && targetVisible && <button className="vision-object-label" style={{ left: targetPosition.x, top: targetPosition.y }} onClick={() => { setSelected(target); setSheet('object'); }}>
+          <span className="vision-object-dot" /><span className="vision-object-line" /><span className="vision-object-name">{target.label}</span>
+        </button>}
+        {hint && !tools && !sheet && !busy && !followup && <p className="vision-live-hint">Point at something. Or tap to explore.</p>}
+        {tools && !sheet && <div className="vision-context-tools">
+          <Link to="/" aria-label="Leave Vision"><ArrowLeft size={18} /></Link>
+          <button onClick={() => openAsk(null)}><AudioLines size={18} /> Ask Neurix</button>
+          {answer && <button onClick={readAloud} aria-label="Read last answer aloud"><Volume2 size={18} /></button>}
+          <button onClick={() => { setTools(false); void session.start(); }} aria-label="Scan again"><Scan size={18} /></button>
+        </div>}
+        {(busy || followup || speechError) && !sheet && <div className="vision-followup" role="status"><span>{speechError || (busy ? 'Looking at this view…' : followup)}</span>{!busy && (answer || followup) && <button onClick={readAloud} aria-label="Read aloud"><Volume2 size={15} /></button>}<button onClick={() => { stopQuestion(); setFollowup(''); setSpeechError(''); }} aria-label="Dismiss"><X size={15} /></button></div>}
+      </>}
+
+      {phase === 'live' && sheet === 'object' && selected && <VisionSheet title={selected.label} onClose={closeSheet}>
+        <p className="vision-secondary">Appears to be:<br />{selected.label}</p>
+        <p className="vision-fine">Visible in this session from the camera view. Exact brand or model is only named after it can be read.</p>
+        <div className="vision-object-meta"><Check size={13} /> {selected.observations} observation{selected.observations === 1 ? '' : 's'}</div>
+        <div className="vision-sheet-actions">
+          <button onClick={() => openAsk(selected)}><AudioLines size={16} /> Ask about this</button>
+          <button onClick={() => openAsk(selected, true)}><Scan size={16} /> Inspect</button>
+          <a href={searchObject(selected)} target="_blank" rel="noopener noreferrer"><ArrowUpRight size={16} /> Search</a>
+        </div>
+        <p className="vision-fine">Search opens web results for this observed category. Online information is separate from what the camera sees.</p>
+      </VisionSheet>}
+
+      {phase === 'live' && sheet === 'ask' && <VisionSheet title={selected ? `About this ${selected.label.toLowerCase()}` : 'Ask about this view'} onClose={closeSheet}>
+        {answer && <p className="vision-answer" role="status">{answer}</p>}
+        {followup && <p className="vision-secondary">{followup}</p>}
+        {questionError && <p className="vision-question-error" role="alert">{questionError}</p>}
+        {speechError && <p className="vision-fine" role="status">{speechError}</p>}
+        {session.recognitionStatus && <p className="vision-fine">{session.recognitionStatus}</p>}
+        <form onSubmit={submit}>
+          <div className="vision-question-input">
+            <textarea aria-label="Your question" placeholder="What am I looking at?" value={question} onChange={event => setQuestion(event.target.value)} rows={2} maxLength={2000} />
+            <button type="submit" className="vision-send" disabled={!question.trim() || busy} aria-label="Send view and question"><Send size={17} /></button>
+          </div>
+          <div className="vision-voice-row"><button type="button" className="vision-voice-button" onClick={listen} aria-pressed={listening}><Mic size={15} />{listening ? 'Listening… tap to stop' : 'Use voice'}</button><span className="vision-fine">You can also type.</span></div>
+          <div className="vision-voice-row">
+            <button type="button" className="vision-voice-button" aria-pressed={spoken} onClick={() => {
+              setSpoken(!spoken); setSpeechError('');
+              if (spoken) voice.current.stopSpeech();
+              else voice.current.speak(navigator.language.startsWith('hu') ? 'Felolvasás bekapcsolva.' : 'Spoken replies are on.', setSpeechError);
+            }}>{spoken ? <Volume2 size={15} /> : <VolumeX size={15} />} Read replies aloud</button>
+            {answer && <button type="button" className="vision-voice-button" onClick={readAloud}><Volume2 size={15} /> Read aloud</button>}
+          </div>
+          <p className="vision-fine">Send shares one camera image and your question with the AI provider. Voice uses your browser’s speech service; review the text before sending.</p>
+          <label className="vision-followup-consent"><input type="checkbox" checked={allowFollowup} onChange={event => setAllowFollowup(event.target.checked)} /><span>Allow up to 3 new views when this question needs another angle.</span></label>
+        </form>
+      </VisionSheet>}
+    </main>
+  );
+}

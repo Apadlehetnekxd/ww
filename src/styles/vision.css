@@ -1,0 +1,76 @@
+.vision-app {
+  position: fixed; inset: 0; width: 100%; height: 100dvh; min-height: 100svh;
+  overflow: hidden; isolation: isolate; background: #000; color: #fff; z-index: 60;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-tap-highlight-color: transparent; color-scheme: dark;
+}
+.vision-app button, .vision-sheet button, .vision-sheet a { cursor: pointer; }
+.vision-app button:focus-visible, .vision-app a:focus-visible, .vision-sheet :focus-visible { outline: 1px solid #fff; outline-offset: 5px; }
+.vision-video, .vision-points { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center; pointer-events: none; }
+.vision-video { opacity: 0; transform: none; transition: opacity 400ms cubic-bezier(.4, 0, .2, 1); }
+.vision-points { opacity: 1; background: transparent; transition: opacity 400ms cubic-bezier(.4, 0, .2, 1); }
+.vision-hand-points { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; transition: opacity 400ms ease; }
+.vision-app[data-phase='scanning'] .vision-video,
+.vision-app[data-phase='understood'] .vision-video,
+.vision-app[data-phase='revealing'] .vision-video,
+.vision-app[data-phase='live'] .vision-video { opacity: 1; }
+.vision-app[data-phase='revealing'] .vision-points, .vision-app[data-phase='live'] .vision-points { opacity: 0; }
+.vision-app[data-phase='permission'] .vision-points, .vision-app[data-phase='paused'] .vision-points,
+.vision-app[data-phase='requesting'] .vision-points, .vision-app[data-phase='error'] .vision-points { opacity: 0; }
+.vision-entry { position: absolute; bottom: max(36px, env(safe-area-inset-bottom)); left: 0; right: 0; width: min(100%, 410px); padding: 0 30px 14px; margin: 0 auto; animation: vision-appear 700ms ease both; }
+.vision-entry > p:first-child { font-size: 18px; line-height: 1.4; font-weight: 450; letter-spacing: -.025em; margin-bottom: 10px; }
+.vision-auth-gate .vision-entry h1 { margin: 0 0 12px; font-size: 24px; font-weight: 450; line-height: 1.2; letter-spacing: -.03em; }
+.vision-access-badges { display: flex; align-items: center; gap: 7px; margin-bottom: 18px; }
+.vision-access-badges span { display: inline-flex; align-items: center; min-height: 24px; padding: 0 9px; border: 1px solid #ffffff40; border-radius: 999px; color: #ffffffb3; font-size: 9px; font-weight: 600; letter-spacing: .12em; }
+.vision-secondary { color: #ffffff8c; font-size: 13px; line-height: 1.7; margin: 0; }
+.vision-primary { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; padding: 17px 20px; min-height: 54px; margin: 30px 0 18px; background: #fff; color: #000; border: 1px solid #fff; border-radius: 100px; font-size: 13px; font-weight: 550; }
+.vision-fine { font-size: 11px; line-height: 1.65; color: #ffffff70; margin: 0; }
+.vision-back { display: inline-flex; align-items: center; gap: 7px; color: #ffffff80; font-size: 11px; margin-top: 22px; padding: 8px 0; }
+.vision-scan-status { position: absolute; z-index: 2; bottom: max(42px, calc(env(safe-area-inset-bottom) + 22px)); left: 0; right: 0; margin: 0 auto; width: min(100%, 410px); padding: 24px 32px 0; pointer-events: none; text-shadow: 0 1px 8px #000; transition: opacity 600ms ease; }
+.vision-scan-status::before { content: ''; position: absolute; inset: -80px -80px -100px; z-index: -1; background: linear-gradient(transparent, #000c 50%, #000); pointer-events: none; }
+.vision-status-title { font-size: 14px; font-weight: 450; line-height: 1.5; letter-spacing: -.01em; margin: 0 0 10px; }
+.vision-progress-copy { color: #ffffff8c; font-size: 11px; letter-spacing: .01em; font-variant-numeric: tabular-nums; margin: 0 0 17px; }
+.vision-progress-copy span { padding: 0 5px; }
+.vision-progress { height: 2px; background: #ffffff26; overflow: hidden; width: 100%; }
+.vision-progress > span { display: block; width: 100%; height: 100%; background: #fff; transform-origin: left; transition: transform 300ms linear; }
+.vision-instruction { color: #ffffff8c; font-size: 11px; line-height: 1.6; margin: 19px 0 0; min-height: 18px; }
+.vision-app[data-phase='revealing'] .vision-scan-status { opacity: 0; }
+.vision-touch-surface { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; }
+.vision-object-label { position: absolute; display: flex; align-items: center; min-height: 44px; padding: 0; max-width: 160px; border: 0; background: transparent; transform: translateY(-50%); transition: left 220ms linear, top 220ms linear; text-shadow: 0 1px 7px #000; }
+.vision-object-dot { flex: 0 0 5px; height: 5px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px #ffffff12, 0 1px 5px #0004; }
+.vision-object-line { width: 22px; height: 1px; background: #ffffffa6; margin: 0 7px 0 2px; }
+.vision-object-name { color: #fff; font-size: 12px; font-weight: 450; line-height: 1.5; text-align: left; }
+.vision-live-hint { position: absolute; bottom: max(38px, calc(env(safe-area-inset-bottom) + 20px)); width: 100%; padding: 0 25px; text-align: center; font-size: 12px; color: #fff; text-shadow: 0 1px 8px #000; pointer-events: none; animation: vision-hint 5.5s ease both; }
+.vision-context-tools { position: absolute; display: flex; align-items: center; gap: 6px; bottom: max(25px, calc(env(safe-area-inset-bottom) + 12px)); left: 50%; transform: translateX(-50%); border: 1px solid #ffffff30; background: #000b; backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-radius: 100px; padding: 6px; white-space: nowrap; }
+.vision-context-tools button, .vision-context-tools a { display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 44px; height: 44px; border: 0; border-radius: 50px; background: transparent; color: #fff; font-size: 12px; }
+.vision-context-tools button:first-of-type { padding: 0 16px; }
+.vision-followup { position: absolute; bottom: max(32px, calc(env(safe-area-inset-bottom) + 14px)); left: 24px; right: 24px; width: fit-content; max-width: calc(100% - 48px); margin: 0 auto; display: flex; align-items: flex-start; gap: 12px; padding: 10px 8px 10px 20px; background: #000b; border: 1px solid #ffffff20; border-radius: 22px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); font-size: 12px; line-height: 1.55; }
+.vision-followup span { max-width: 52ch; }
+.vision-followup button { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; background: transparent; border: 0; }
+.vision-sheet { position: fixed; inset: auto 0 0; box-sizing: border-box; width: min(100%, 480px); max-width: 100%; max-height: min(56dvh, 520px); margin: 0 auto; padding: 10px 25px max(25px, calc(env(safe-area-inset-bottom) + 14px)); border: 1px solid #ffffff26; border-bottom: 0; border-radius: 26px 26px 0 0; color: #fff; background: #0a0a0af5; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color-scheme: dark; overflow-y: auto; overscroll-behavior: contain; animation: vision-sheet-up 250ms ease both; }
+.vision-sheet::backdrop { background: #0002; }
+.vision-sheet-handle { width: 30px; height: 3px; border-radius: 5px; margin: 0 auto 12px; background: #ffffff30; }
+.vision-sheet-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 10px; }
+.vision-sheet-heading h2 { font-size: 18px; font-weight: 450; letter-spacing: -.035em; margin: 0; }
+.vision-icon-button { display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: #ffffff09; color: #fff; flex-shrink: 0; }
+.vision-object-meta { display: flex; align-items: center; gap: 6px; color: #ffffff65; font-size: 10px; margin-top: 15px; }
+.vision-sheet-actions { display: flex; gap: 8px; margin: 25px 0 18px; flex-wrap: wrap; }
+.vision-sheet-actions button, .vision-sheet-actions a { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 1px solid #ffffff25; border-radius: 40px; font-size: 11px; background: transparent; color: #fff; text-decoration: none; }
+.vision-sheet-actions button:first-child { background: #fff; color: #000; border-color: #fff; }
+.vision-answer { font-size: 13px; line-height: 1.8; white-space: pre-wrap; margin: 0 0 20px; color: #ffffffdf; }
+.vision-question-error { color: #fff; border-left: 1px solid #ffffff70; padding-left: 12px; font-size: 12px; line-height: 1.7; margin-bottom: 18px; }
+.vision-question-input { position: relative; margin-top: 15px; }
+.vision-question-input textarea { width: 100%; border: 1px solid #ffffff26; border-radius: 15px; padding: 15px 55px 15px 15px; background: #ffffff05; color: #fff; resize: vertical; min-height: 88px; max-height: 140px; font: inherit; font-size: 16px; line-height: 1.5; }
+.vision-question-input textarea::placeholder { color: #ffffff50; }
+.vision-send { position: absolute; right: 10px; bottom: 13px; display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 50%; background: #fff; color: #000; }
+.vision-send:disabled { opacity: .3; cursor: default; }
+.vision-voice-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 6px 0 12px; }
+.vision-voice-button { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; color: #ffffffb3; background: transparent; border: 0; font-size: 11px; }
+.vision-voice-button[aria-pressed='true'] { color: #fff; }
+.vision-followup-consent { display: flex; align-items: flex-start; gap: 8px; color: #ffffff80; font-size: 10px; line-height: 1.6; margin-top: 15px; }
+.vision-followup-consent input { margin-top: 2px; accent-color: #fff; flex-shrink: 0; }
+@keyframes vision-appear { from { opacity: 0; } to { opacity: 1; } }
+@keyframes vision-sheet-up { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes vision-hint { 0%, 100% { opacity: 0; } 12%, 80% { opacity: 1; } }
+@media (min-width: 768px) { .vision-entry { bottom: 60px; } .vision-scan-status { bottom: 48px; } }
+@media (prefers-reduced-motion: reduce) { .vision-app *, .vision-sheet { animation: none !important; transition-duration: 0ms !important; } }

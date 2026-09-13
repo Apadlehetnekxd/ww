@@ -1,0 +1,3241 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Think Forward inspired design system — editorial, light, ambitious typography.
+ * All colors in oklch.
+ */
+
+@theme inline {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 16px);
+  --radius-4xl: calc(var(--radius) + 28px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+
+  --color-cream: var(--cream);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-rule: var(--rule);
+  --color-highlight: var(--highlight);
+}
+
+:root {
+  --radius: 0.75rem;
+
+  /* Mono palette — white, black, yellow accent. Greys reserved for rules/dividers only. */
+  --background: oklch(1 0 0); /* pure white */
+  --foreground: oklch(0 0 0); /* pure black */
+  --ink: oklch(0 0 0);
+  --ink-soft: oklch(0.45 0 0); /* mid-grey for secondary copy */
+  --cream: oklch(0.97 0 0); /* near-white surface */
+  --rule: oklch(0.32 0.008 260); /* deep slate divider — premium, not stark */
+  --highlight: oklch(0.92 0.18 100); /* yellow accent */
+
+  --card: oklch(1 0 0);
+  --card-foreground: var(--ink);
+  --popover: oklch(1 0 0);
+  --popover-foreground: var(--ink);
+
+  --primary: oklch(0 0 0);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: var(--cream);
+  --secondary-foreground: var(--ink);
+  --muted: var(--cream);
+  --muted-foreground: var(--ink-soft);
+  --accent: var(--highlight);
+  --accent-foreground: var(--ink);
+  --destructive: oklch(0.55 0.22 27);
+  --destructive-foreground: oklch(0.985 0.005 95);
+
+  --border: var(--rule);
+  --input: var(--rule);
+  --ring: oklch(0.5 0.02 60);
+}
+
+.dark {
+  --background: oklch(0 0 0);
+  --foreground: oklch(1 0 0);
+  --ink: oklch(1 0 0);
+  --ink-soft: oklch(1 0 0);
+  --cream: oklch(0 0 0);
+  --rule: oklch(0.38 0.012 260); /* muted slate, never stark white */
+  --highlight: oklch(0.92 0.18 100);
+
+  --card: oklch(0 0 0);
+  --card-foreground: var(--ink);
+  --popover: oklch(0 0 0);
+  --popover-foreground: var(--ink);
+  --primary: oklch(1 0 0);
+  --primary-foreground: oklch(0 0 0);
+  --secondary: var(--cream);
+  --secondary-foreground: var(--ink);
+  --muted: var(--cream);
+  --muted-foreground: var(--ink-soft);
+  --accent: var(--highlight);
+  --accent-foreground: oklch(0 0 0);
+  --destructive: oklch(0.6 0.22 27);
+  --destructive-foreground: oklch(1 0 0);
+  --border: var(--rule);
+  --input: var(--rule);
+  --ring: oklch(1 0 0);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  /* Global scrollbar: black across the whole app */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #000 transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: #000;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: #111;
+    background-clip: padding-box;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    /* Smooth tonal transition when toggling themes (fallback for browsers
+       without View Transitions). */
+    transition:
+      background-color 0.6s cubic-bezier(0.7, 0, 0.3, 1),
+      color 0.6s cubic-bezier(0.7, 0, 0.3, 1);
+  }
+}
+
+/* Elegant theme switch via View Transitions API */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 2;
+}
+
+/* Editorial display typography */
+.tf-display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 0.92;
+}
+
+.tf-eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.tf-rule {
+  border-top: 1px solid var(--rule);
+}
+
+/* Marquee */
+@keyframes tf-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.tf-marquee {
+  animation: tf-marquee 35s linear infinite;
+}
+
+/* Subtle blink for terminal cursor */
+@keyframes tf-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+.tf-blink {
+  animation: tf-blink 1s step-end infinite;
+}
+
+@keyframes tf-typing-dot {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+.tf-typing-dot {
+  animation: tf-typing-dot 1.2s ease-in-out infinite;
+}
+
+/* ===== Framer-style entrance animations ===== */
+
+/* Default reveal state — hidden until in-view. Slower, more cinematic easing. */
+.reveal {
+  opacity: 0;
+  transform: translateY(36px);
+  filter: blur(8px);
+  transition:
+    opacity 1.1s cubic-bezier(0.19, 1, 0.22, 1),
+    transform 1.2s cubic-bezier(0.19, 1, 0.22, 1),
+    filter 1.1s cubic-bezier(0.19, 1, 0.22, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform, filter;
+}
+.reveal.is-in {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+
+.reveal-up {
+  transform: translateY(48px) scale(0.985);
+}
+.reveal-down {
+  transform: translateY(-32px) scale(0.985);
+}
+.reveal-left {
+  transform: translateX(56px) rotate(0.4deg);
+}
+.reveal-right {
+  transform: translateX(-56px) rotate(-0.4deg);
+}
+.reveal-scale {
+  transform: scale(0.92);
+  filter: blur(10px);
+}
+.reveal-tilt {
+  transform: perspective(1200px) rotateX(10deg) translateY(40px);
+  transform-origin: 50% 100%;
+  filter: blur(10px);
+}
+.reveal-rise {
+  transform: translateY(80px) scale(0.96);
+  filter: blur(12px);
+}
+
+.reveal-up.is-in,
+.reveal-down.is-in,
+.reveal-left.is-in,
+.reveal-right.is-in,
+.reveal-rise.is-in {
+  transform: translate(0, 0) scale(1) rotate(0);
+}
+.reveal-scale.is-in {
+  transform: scale(1);
+  filter: blur(0);
+}
+.reveal-tilt.is-in {
+  transform: perspective(1200px) rotateX(0) translateY(0);
+  filter: blur(0);
+}
+
+/* Word/char stagger reveal for big headlines */
+.reveal-text > .tf-word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.6em);
+  filter: blur(8px);
+  transition:
+    opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: calc(var(--i, 0) * 70ms);
+  will-change: opacity, transform, filter;
+}
+.reveal-text.is-in > .tf-word {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+
+/* Live counter — gentle scale-in tick */
+@keyframes tf-tick {
+  0% {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.tf-tick {
+  animation: tf-tick 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Hover micro-interactions */
+.tf-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.tf-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  height: 1px;
+  width: 100%;
+  background: currentColor;
+  transform: scaleX(1);
+  transform-origin: right;
+  transition: transform 0.5s cubic-bezier(0.7, 0, 0.3, 1);
+}
+.tf-link:hover::after {
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.tf-link > .tf-arrow {
+  transition: transform 0.45s cubic-bezier(0.7, 0, 0.3, 1);
+}
+.tf-link:hover > .tf-arrow {
+  transform: translateX(6px);
+}
+
+.tf-cta {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tf-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--highlight);
+  transform: translateY(101%);
+  transition: transform 0.5s cubic-bezier(0.7, 0, 0.3, 1);
+  z-index: -1;
+}
+.tf-cta:hover::before {
+  transform: translateY(0);
+}
+.tf-cta:hover {
+  color: var(--ink);
+}
+.tf-cta:active {
+  transform: scale(0.97);
+}
+
+.tf-card {
+  transition:
+    background-color 0.4s ease,
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tf-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Marquee pause on hover */
+.tf-marquee-wrap:hover .tf-marquee {
+  animation-play-state: paused;
+}
+
+/* ===== Premium streaming text reveal (Chat) ===== */
+@keyframes tf-stream-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+.tf-stream-word {
+  display: inline-block;
+  animation: tf-stream-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ===== Floating glow orbs (premium ambient bg) ===== */
+@keyframes tf-float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(40px, -30px) scale(1.08);
+  }
+  66% {
+    transform: translate(-30px, 20px) scale(0.95);
+  }
+}
+.tf-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  opacity: 0.55;
+  pointer-events: none;
+  animation: tf-float 18s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* ===== Editorial caret (chat input) ===== */
+@keyframes tf-caret {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+.tf-caret {
+  animation: tf-caret 1s step-end infinite;
+}
+
+/* ===== Hover invert (replaces cream-hover, since cream is now white) ===== */
+.tf-invert-hover {
+  transition:
+    background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.35s ease;
+}
+.tf-invert-hover:hover {
+  background-color: var(--foreground);
+  color: var(--background);
+}
+
+/* ===== Magnetic underline-grow link ===== */
+.tf-mag {
+  position: relative;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tf-mag:hover {
+  transform: translateY(-2px);
+}
+
+/* ===== Slow tilt-in ===== */
+@keyframes tf-tilt-in {
+  from {
+    opacity: 0;
+    transform: perspective(1200px) rotateX(8deg) translateY(40px);
+    filter: blur(10px);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(1200px) rotateX(0) translateY(0);
+    filter: blur(0);
+  }
+}
+.tf-tilt-in {
+  animation: tf-tilt-in 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ===== Lead-in when the conversation first opens (first message sent) ===== */
+@keyframes tf-chat-enter {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.985);
+    filter: blur(8px);
+  }
+  60% {
+    filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+.tf-chat-enter {
+  animation: tf-chat-enter 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ===== Highlight underline sweep on big titles ===== */
+@keyframes tf-sweep {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.tf-sweep::after {
+  content: "";
+  display: block;
+  height: 6px;
+  margin-top: 0.4em;
+  background: var(--highlight);
+  transform-origin: left;
+  animation: tf-sweep 1.4s cubic-bezier(0.7, 0, 0.3, 1) 0.4s both;
+}
+
+/* ===== Sticky scroll-stack cards (premium) ===== */
+.tf-stack-card {
+  will-change: transform;
+}
+
+/* ===== Markdown prose for chat replies ===== */
+.tf-prose {
+  color: var(--foreground);
+}
+.tf-prose > * + * {
+  margin-top: 1.1em;
+}
+.tf-prose h1,
+.tf-prose h2,
+.tf-prose h3,
+.tf-prose h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin-top: 1.6em;
+}
+.tf-prose h1 {
+  font-size: 2rem;
+}
+.tf-prose h2 {
+  font-size: 1.6rem;
+}
+.tf-prose h3 {
+  font-size: 1.25rem;
+}
+.tf-prose h4 {
+  font-size: 1.1rem;
+}
+.tf-prose p {
+  line-height: 1.7;
+  font-size: 1.05rem;
+}
+.tf-prose strong {
+  font-weight: 600;
+  color: var(--foreground);
+}
+.tf-chat-page .tf-prose strong {
+  font-size: 1.18em;
+  font-weight: 800;
+}
+.tf-chat-page .tf-prose :is(h1, h2, h3, h4) {
+  font-weight: 750;
+}
+.tf-chat-page .tf-prose :is(h1, h2, h3, h4, strong) strong {
+  font-size: inherit;
+}
+.tf-prose em {
+  font-style: italic;
+}
+.tf-prose ul,
+.tf-prose ol {
+  padding-left: 1.4em;
+}
+.tf-prose ul {
+  list-style: none;
+  padding-left: 0;
+}
+.tf-prose ul > li {
+  position: relative;
+  padding-left: 1.4em;
+  line-height: 1.7;
+}
+.tf-prose ul > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.78em;
+  width: 0.7em;
+  height: 1px;
+  background: var(--foreground);
+}
+.tf-prose ol {
+  list-style: decimal;
+}
+.tf-prose ol > li {
+  line-height: 1.7;
+  padding-left: 0.25em;
+}
+.tf-prose li + li {
+  margin-top: 0.45em;
+}
+.tf-prose a {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.tf-prose blockquote {
+  border-left: 2px solid var(--foreground);
+  padding-left: 1em;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+.tf-prose code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  background: var(--cream);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.tf-prose pre {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--foreground);
+  color: var(--background);
+  padding: 1.1em 1.3em;
+  border-radius: 10px;
+  overflow-x: auto;
+  line-height: 1.55;
+}
+.tf-prose pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: inherit;
+}
+.tf-prose hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 2em 0;
+}
+
+/* Compact prose variant — used inside mobile chat bubbles */
+.tf-prose-compact > * + * {
+  margin-top: 0.75em;
+}
+.tf-prose-compact p,
+.tf-prose-compact ul > li,
+.tf-prose-compact ol > li {
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+.tf-prose-compact h1 {
+  font-size: 1.4rem;
+  margin-top: 1em;
+}
+.tf-prose-compact h2 {
+  font-size: 1.2rem;
+  margin-top: 1em;
+}
+.tf-prose-compact h3,
+.tf-prose-compact h4 {
+  font-size: 1.05rem;
+  margin-top: 1em;
+}
+.tf-prose-compact pre {
+  font-size: 0.8em;
+  padding: 0.9em 1em;
+}
+
+/* Markdown controls spacing; source newlines must not add blank rows. */
+.tf-chat-page .tf-prose > * + * {
+  margin-top: 0.65em;
+}
+.tf-chat-page .tf-prose :is(h1, h2, h3, h4) {
+  margin-top: 1em;
+}
+.tf-chat-page .tf-prose > :first-child {
+  margin-top: 0;
+}
+.tf-chat-page .tf-prose :is(h1, h2, h3, h4) + * {
+  margin-top: 0.5em;
+}
+.tf-chat-page .tf-prose li + li {
+  margin-top: 0.25em;
+}
+.tf-chat-page .tf-prose pre {
+  white-space: pre;
+}
+
+/* ===== Mobile chat micro-interactions ===== */
+/* Bubble entrance — user slides in from the right, assistant from the left */
+@keyframes tf-bubble-in-right {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) translateX(14px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) translateX(0) scale(1);
+  }
+}
+@keyframes tf-bubble-in-left {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) translateX(-14px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) translateX(0) scale(1);
+  }
+}
+.tf-bubble-user {
+  animation: tf-bubble-in-right 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.tf-bubble-ai {
+  animation: tf-bubble-in-left 0.46s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Assistant label + dot fade/slide in slightly before the bubble */
+@keyframes tf-fade-slide {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.tf-fade-slide {
+  animation: tf-fade-slide 0.4s ease both;
+}
+
+/* The live highlight dot on the assistant "pulses" while streaming */
+@keyframes tf-live-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--highlight) 70%, transparent);
+  }
+  50% {
+    transform: scale(1.35);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--highlight) 0%, transparent);
+  }
+}
+.tf-live-dot {
+  animation: tf-live-pulse 1.4s ease-in-out infinite;
+}
+
+/* Three-dot "thinking" bounce */
+@keyframes tf-dot-bounce {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+.tf-think-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: tf-dot-bounce 1.2s ease-in-out infinite;
+}
+.tf-think-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.tf-think-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* Toolbar drops in from the top on mount */
+@keyframes tf-drop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.tf-drop-in {
+  animation: tf-drop-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Streaming text words fade+rise as they arrive */
+@keyframes tf-word-in {
+  0% {
+    opacity: 0;
+    transform: translateY(0.35em);
+    filter: blur(3px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* ===== Shimmer skeleton (image gen loader) ===== */
+@keyframes tf-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+.tf-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--foreground) 8%, transparent),
+    transparent
+  );
+  animation: tf-shimmer 1.8s ease-in-out infinite;
+}
+
+/* When the first message is sent the composer glides down from around the
+   centre of the screen (where it lived in the empty state) into its docked
+   spot at the bottom, with a soft settle at the end. */
+@keyframes tf-composer-dock {
+  0% {
+    opacity: 0.4;
+    transform: translateY(-42vh) scale(0.94);
+    filter: blur(4px);
+  }
+  30% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  82% {
+    transform: translateY(4px) scale(1.005);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+.tf-composer-dock {
+  animation: tf-composer-dock 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform, opacity;
+}
+
+/* Flat yellow composer border in both themes, including focus. */
+.tf-composer-field {
+  position: relative;
+  overflow: visible;
+  border: 1px solid var(--highlight);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--cream) 45%, var(--background));
+  box-shadow: none;
+}
+
+.tf-composer-field.tf-composer-field-quality {
+  border-color: #4f86ff;
+  background: color-mix(in srgb, #4f86ff 7%, var(--background));
+}
+
+.dark .tf-composer-field.tf-composer-field-quality {
+  border-color: #6599ff;
+  background: color-mix(in srgb, #4f86ff 10%, var(--background));
+}
+
+.tf-composer-field textarea {
+  min-width: 0;
+}
+
+.tf-composer-field:has(.tf-model-picker-ultra) {
+  border-color: #a86bff;
+  background: color-mix(in srgb, #8b5cf6 7%, var(--background));
+}
+
+.dark .tf-composer-field:has(.tf-model-picker-ultra) {
+  border-color: #b879ff;
+  background: color-mix(in srgb, #8b5cf6 10%, var(--background));
+}
+
+/* No glowing status rings or ambient light in the chat's mobile menu. */
+.tf-chat-page .tf-live-dot {
+  animation: none;
+  box-shadow: none;
+}
+
+body:has(.tf-chat-page) .tf-menu-blob {
+  display: none;
+}
+
+.tf-model-picker {
+  position: relative;
+  z-index: 35;
+  flex: 0 0 auto;
+}
+
+.tf-model-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 5rem;
+  padding: 0.5rem;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.25;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.tf-model-trigger:hover:not(:disabled),
+.tf-model-trigger[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+
+.tf-model-trigger:focus-visible {
+  outline: 1px solid var(--foreground);
+  outline-offset: 2px;
+}
+
+.tf-model-trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.tf-model-trigger svg {
+  opacity: 0.5;
+}
+
+.tf-model-popover {
+  --model-accent: #bf91f5;
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 1rem);
+  width: min(17.5rem, calc(100vw - 4rem));
+  padding: 0.65rem 0.75rem 0.625rem;
+  border: 1px solid #2a2e38;
+  border-radius: 18px;
+  background: #17191e;
+  color: #f4f4f5;
+  box-shadow: none;
+  transform-origin: bottom right;
+  animation: tf-model-open 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.dark .tf-model-popover {
+  --model-accent: #bf91f5;
+  background: #0d0f13;
+  border-color: #222731;
+}
+
+.tf-model-picker-down .tf-model-popover {
+  top: calc(100% + 1rem);
+  bottom: auto;
+  transform-origin: top right;
+}
+
+.tf-model-popover-heading {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr) 1.5rem;
+  align-items: start;
+  min-height: 2.6rem;
+  gap: 0.375rem;
+}
+
+.tf-model-mode-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  margin-top: 0.25rem;
+  color: var(--ink-soft);
+}
+
+.tf-model-mode-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-top: 0.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: rgb(255 255 255 / 64%);
+  cursor: pointer;
+  transition: color 160ms ease, background-color 160ms ease;
+}
+
+.tf-model-mode-icon-button .tf-model-mode-icon {
+  margin-top: 0;
+  color: currentColor;
+}
+
+.tf-model-mode-icon-button:not(:disabled):hover {
+  background: rgb(255 255 255 / 8%);
+  color: #bf91f5;
+}
+
+.tf-model-mode-icon-button.is-on {
+  color: #d4aaff;
+}
+
+.tf-model-mode-icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.tf-model-popover .tf-model-mode-icon,
+.tf-model-popover .tf-model-popover-subtitle,
+.tf-model-popover .tf-model-reset {
+  color: rgb(255 255 255 / 64%);
+}
+
+.tf-model-ultra-note {
+  margin: 0.45rem 0.15rem 0;
+  color: rgb(255 255 255 / 56%);
+  font-size: 0.65rem;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.tf-model-popover-caption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.tf-model-title-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.125rem 0.25rem;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--model-accent);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.25;
+  cursor: pointer;
+}
+
+.tf-model-popover-subtitle {
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+
+.tf-model-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: color 160ms ease, background-color 160ms ease;
+}
+
+.tf-model-reset:hover:not(:disabled),
+.tf-model-title-switch:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
+.tf-model-reset:focus-visible,
+.tf-model-title-switch:focus-visible {
+  outline: 1px solid var(--model-accent);
+  outline-offset: 2px;
+}
+
+.tf-model-reset:disabled,
+.tf-model-title-switch:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tf-model-slider {
+  position: relative;
+  height: 1.875rem;
+  margin-top: 0.25rem;
+}
+
+.tf-model-slider-track {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 1.5rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: linear-gradient(100deg, #4b4bae 0%, #9a73ca 48%, #7052b5 100%);
+  transform: translateY(-50%);
+}
+
+.tf-model-picker-fast .tf-model-slider-track {
+  background: linear-gradient(100deg, #354cc6 0%, #9d74eb 36%, #c18ff3 58%, #6546cd 100%);
+}
+
+.tf-model-picker-ultra .tf-model-slider-track {
+  background: linear-gradient(100deg, #6440b8 0%, #9a63dd 45%, #c084fc 100%);
+}
+
+/* Particles stay inside the track and travel strictly left to right. */
+.tf-model-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.tf-model-particles span {
+  position: absolute;
+  inset: 0;
+  transform: translateX(var(--particle-x));
+  animation: tf-model-particle-right var(--model-particle-duration, 3.2s) linear infinite;
+  animation-delay: var(--particle-delay);
+}
+
+.tf-model-particles span::before {
+  position: absolute;
+  top: var(--particle-y);
+  left: -4px;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 70%);
+  content: "";
+}
+
+.tf-model-particles span:nth-child(1) { --particle-x: 6%; --particle-y: 6px; --particle-delay: -0.08s; }
+.tf-model-particles span:nth-child(2) { --particle-x: 13%; --particle-y: 17px; --particle-delay: -0.18s; }
+.tf-model-particles span:nth-child(3) { --particle-x: 19%; --particle-y: 10px; --particle-delay: -0.27s; }
+.tf-model-particles span:nth-child(4) { --particle-x: 27%; --particle-y: 4px; --particle-delay: -0.38s; }
+.tf-model-particles span:nth-child(5) { --particle-x: 34%; --particle-y: 15px; --particle-delay: -0.48s; }
+.tf-model-particles span:nth-child(6) { --particle-x: 40%; --particle-y: 7px; --particle-delay: -0.57s; }
+.tf-model-particles span:nth-child(7) { --particle-x: 46%; --particle-y: 19px; --particle-delay: -0.66s; }
+.tf-model-particles span:nth-child(8) { --particle-x: 52%; --particle-y: 11px; --particle-delay: -0.74s; }
+.tf-model-particles span:nth-child(9) { --particle-x: 59%; --particle-y: 5px; --particle-delay: -0.84s; }
+.tf-model-particles span:nth-child(10) { --particle-x: 66%; --particle-y: 16px; --particle-delay: -0.94s; }
+.tf-model-particles span:nth-child(11) { --particle-x: 73%; --particle-y: 9px; --particle-delay: -1.04s; }
+.tf-model-particles span:nth-child(12) { --particle-x: 80%; --particle-y: 3px; --particle-delay: -1.14s; }
+.tf-model-particles span:nth-child(13) { --particle-x: 85%; --particle-y: 19px; --particle-delay: -1.21s; }
+.tf-model-particles span:nth-child(14) { --particle-x: 91%; --particle-y: 12px; --particle-delay: -1.3s; }
+.tf-model-particles span:nth-child(15) { --particle-x: 96%; --particle-y: 6px; --particle-delay: -1.37s; }
+
+.tf-model-particles span:nth-child(even)::before {
+  width: 1px;
+  height: 1px;
+  opacity: 0.6;
+}
+
+.tf-model-picker-fast .tf-model-particles span:nth-child(3n)::before {
+  width: 5px;
+  height: 1px;
+  border-radius: 1px;
+}
+
+.tf-model-range {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: ew-resize;
+  appearance: none;
+  background: transparent;
+  touch-action: pan-y;
+}
+
+.tf-model-range:focus-visible {
+  outline: 1px solid var(--foreground);
+  outline-offset: 3px;
+  border-radius: 999px;
+}
+
+.tf-model-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.tf-model-range::-webkit-slider-runnable-track {
+  height: 1.5rem;
+  background: transparent;
+}
+
+.tf-model-range::-moz-range-track {
+  height: 1.5rem;
+  background: transparent;
+}
+
+.tf-model-range::-webkit-slider-thumb {
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: -0.125rem;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: none;
+  appearance: none;
+}
+
+.tf-model-range::-moz-range-thumb {
+  box-sizing: border-box;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: none;
+}
+
+@keyframes tf-model-particle-right {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(100% + 8px)); }
+}
+
+@keyframes tf-ultra-bolt {
+  0%, 100% {
+    opacity: 0.72;
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.16) rotate(-8deg);
+  }
+}
+
+.tf-ultra-bolt {
+  animation: tf-ultra-bolt 0.72s ease-in-out infinite;
+}
+
+.tf-model-picker-ultra-boost .tf-ultra-bolt {
+  animation-duration: 0.36s;
+}
+
+.tf-model-picker-ultra .tf-model-popover {
+  animation-duration: 120ms;
+}
+
+@keyframes tf-model-open {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tf-model-popover,
+  .tf-model-picker-fast .tf-model-particles span,
+  .tf-model-picker-ultra .tf-model-particles span,
+  .tf-model-picker-ultra-boost .tf-model-particles span,
+  .tf-ultra-bolt {
+    animation: none;
+  }
+}
+
+@keyframes nx-image-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes nx-image-dock-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes nx-image-reveal {
+  from {
+    opacity: 0;
+    transform: scale(0.985);
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes nx-image-materialize {
+  from {
+    opacity: 0;
+    transform: scale(1.045);
+    filter: blur(12px) saturate(0.82);
+  }
+  55% {
+    opacity: 1;
+    filter: blur(2px) saturate(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0) saturate(1);
+  }
+}
+
+@keyframes nx-render-message-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes nx-render-count-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.image-generator {
+  --image-motion-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.image-generator__empty > .reveal {
+  animation: nx-image-rise 0.8s var(--image-motion-ease) both;
+}
+
+.image-generator[data-image-state="idle"] .image-generator__empty {
+  min-height: 43vh;
+  padding-top: 18vh;
+}
+
+.image-generator[data-image-state="idle"] .image-generator__dock {
+  top: 50%;
+}
+
+.image-generator[data-image-state="idle"] .image-generator__empty h1 {
+  animation: nx-image-rise 0.9s 0.12s var(--image-motion-ease) both;
+}
+
+.image-generator[data-image-state="idle"] .image-generator__empty p {
+  animation: nx-image-rise 0.75s 0.28s var(--image-motion-ease) both;
+}
+
+.image-generator[data-image-state="idle"] .image-generator__composer {
+  animation: nx-image-dock-in 0.8s 0.42s var(--image-motion-ease) both;
+}
+
+.image-generator__empty h1 {
+  text-shadow: 0 0 36px color-mix(in oklab, var(--foreground) 8%, transparent);
+}
+
+.image-generator__dock {
+  animation: nx-image-dock-in 0.7s var(--image-motion-ease) both;
+}
+
+.image-generator__composer {
+  will-change: transform, box-shadow;
+}
+
+.image-generator__composer:focus-within svg {
+  color: var(--highlight);
+  transform: rotate(-8deg) scale(1.08);
+}
+
+.image-generator__composer button:not(:disabled) {
+  box-shadow: 0 5px 18px -8px color-mix(in oklab, var(--foreground) 60%, transparent);
+}
+
+.image-generator__composer button:not(:disabled):hover {
+  box-shadow: 0 8px 24px -8px color-mix(in oklab, var(--highlight) 70%, transparent);
+}
+
+.image-generator__pending {
+  animation: nx-image-reveal 0.6s var(--image-motion-ease) both;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.image-generator__pending > .absolute {
+  display: none;
+}
+
+.image-generator__render-mark {
+  display: flex;
+  align-items: baseline;
+  gap: 0.22rem;
+  color: var(--foreground);
+  font-size: clamp(2.75rem, 6vw, 4.5rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  letter-spacing: -0.06em;
+  line-height: 0.9;
+  animation: nx-render-count-in 0.45s var(--image-motion-ease) both;
+}
+
+.image-generator__render-total {
+  color: color-mix(in oklab, var(--foreground) 28%, transparent);
+  font-size: 0.32em;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.image-generator__render-message {
+  min-width: 13rem;
+  color: color-mix(in oklab, var(--foreground) 72%, transparent);
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
+  animation: nx-render-message-in 0.45s var(--image-motion-ease) both;
+}
+
+.image-generator__featured {
+  animation: nx-image-reveal 0.7s var(--image-motion-ease) both;
+  box-shadow: 0 24px 70px -42px color-mix(in oklab, var(--foreground) 55%, transparent);
+}
+
+.image-generator__featured img {
+  animation: nx-image-materialize 1.15s var(--image-motion-ease) both;
+  transition:
+    transform 1.2s var(--image-motion-ease),
+    filter 0.7s ease;
+}
+
+.image-generator__featured:hover img {
+  filter: saturate(1.04) contrast(1.02);
+}
+
+.image-generator__gallery button {
+  transition:
+    transform 0.35s var(--image-motion-ease),
+    border-color 0.35s ease,
+    opacity 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+.image-generator__gallery button:focus-visible,
+.image-generator__lightbox button:focus-visible {
+  outline: 2px solid var(--highlight);
+  outline-offset: 3px;
+}
+
+.image-generator__gallery button[aria-pressed="true"] {
+  box-shadow: 0 0 0 1px var(--foreground), 0 8px 22px -14px var(--foreground);
+}
+
+.image-generator__lightbox {
+  animation-duration: 0.45s;
+}
+
+.image-generator__lightbox-content {
+  animation-duration: 0.55s;
+  animation-timing-function: var(--image-motion-ease);
+}
+
+.image-generator__lightbox img {
+  box-shadow: 0 28px 80px -30px color-mix(in oklab, black 70%, transparent);
+}
+
+/* Pause heavy animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal-text > .tf-word {
+    transition: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  .tf-marquee {
+    animation: none;
+  }
+  .tf-blink,
+  .tf-caret {
+    animation: none;
+  }
+  .tf-orb {
+    animation: none;
+  }
+  .tf-stream-word {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  .tf-tilt-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  .tf-sweep::after {
+    animation: none;
+    transform: scaleX(1);
+  }
+  .tf-bubble-user,
+  .tf-bubble-ai,
+  .tf-fade-slide,
+  .tf-drop-in,
+  .tf-composer-dock,
+  .tf-chat-enter {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  .tf-composer-field {
+    transition: none;
+  }
+  .image-generator__empty > .reveal,
+  .image-generator__dock,
+  .image-generator__pending,
+  .image-generator__featured,
+  .image-generator__lightbox,
+  .image-generator__lightbox-content,
+  .image-generator__render-mark,
+  .image-generator__render-message {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  .image-generator__featured img,
+  .image-generator__gallery button,
+  .image-generator__composer,
+  .image-generator__composer svg {
+    transition: none;
+    animation: none;
+  }
+  .tf-live-dot,
+  .tf-think-dot {
+    animation: none;
+  }
+}
+
+/* ===== Extra entrance / motion utilities ===== */
+@keyframes tf-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+.tf-fade-up {
+  animation: tf-fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes tf-zoom-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+.tf-zoom-in {
+  animation: tf-zoom-in 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes tf-pop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.tf-pop-in {
+  animation: tf-pop-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes tf-float-soft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+.tf-float-soft {
+  animation: tf-float-soft 4s ease-in-out infinite;
+}
+
+@keyframes tf-pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.25);
+  }
+}
+.tf-pulse-dot {
+  display: inline-block;
+  animation: tf-pulse-dot 1.6s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes tf-aurora-bg {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+.tf-aurora {
+  background: linear-gradient(
+    120deg,
+    color-mix(in oklab, var(--highlight) 25%, transparent),
+    color-mix(in oklab, var(--foreground) 6%, transparent),
+    color-mix(in oklab, var(--highlight) 25%, transparent)
+  );
+  background-size: 220% 220%;
+  animation: tf-aurora-bg 6s ease-in-out infinite;
+  mix-blend-mode: overlay;
+}
+
+.tf-sheen {
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    color-mix(in oklab, var(--foreground) 6%, transparent) 50%,
+    transparent 70%
+  );
+  transition: opacity 0.4s ease;
+}
+
+/* ===== Welcome hero — soft blue ambient glow (Gemini-style) ===== */
+@keyframes wr-ambient {
+  0%,
+  100% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.07);
+  }
+}
+@keyframes wr-ambient-slow {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1.04) rotate(0deg);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1.14) rotate(6deg);
+  }
+}
+@keyframes wr-fade-in {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* Ambient glow colour — a random choice is applied per open via [data-glow].
+   Default (blue) keeps the original look as a fallback. */
+:root {
+  --wr-glow: oklch(0.5 0.19 264);
+  --wr-glow-bright: oklch(0.58 0.2 258);
+}
+
+/* Blue */
+.wr-ambient-wrap[data-glow="blue"] {
+  --wr-glow: oklch(0.5 0.19 264);
+  --wr-glow-bright: oklch(0.58 0.2 258);
+}
+/* Yellow (same in both themes) */
+.wr-ambient-wrap[data-glow="yellow"] {
+  --wr-glow: oklch(0.82 0.17 90);
+  --wr-glow-bright: oklch(0.9 0.15 95);
+}
+/* Neutral: very deep black on light theme, very bright white on dark theme */
+.wr-ambient-wrap[data-glow="neutral"] {
+  --wr-glow: oklch(0.08 0 0);
+  --wr-glow-bright: oklch(0 0 0);
+}
+.dark .wr-ambient-wrap[data-glow="neutral"] {
+  --wr-glow: oklch(0.99 0 0);
+  --wr-glow-bright: oklch(1 0 0);
+}
+
+/* Full-bleed layer that hosts the centered glow */
+.wr-ambient-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Primary blue glow ellipse */
+.wr-ambient {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(80vw, 1150px);
+  height: min(72vh, 640px);
+  border-radius: 9999px;
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in oklab, var(--wr-glow) 62%, transparent) 0%,
+    color-mix(in oklab, var(--wr-glow) 22%, transparent) 42%,
+    transparent 70%
+  );
+  filter: blur(65px);
+  animation:
+    wr-fade-in 1.1s cubic-bezier(0.16, 1, 0.3, 1) both,
+    wr-ambient 9s ease-in-out infinite 1.1s;
+}
+
+/* Secondary, slower counter-rotating glow for depth */
+.wr-ambient-2 {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(56vw, 800px);
+  height: min(52vh, 470px);
+  border-radius: 9999px;
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in oklab, var(--wr-glow-bright) 55%, transparent) 0%,
+    transparent 66%
+  );
+  filter: blur(75px);
+  mix-blend-mode: screen;
+  animation:
+    wr-fade-in 1.3s cubic-bezier(0.16, 1, 0.3, 1) both,
+    wr-ambient-slow 13s ease-in-out infinite 1.3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wr-ambient,
+  .wr-ambient-2 {
+    animation: wr-fade-in 0.6s ease both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tf-fade-up,
+  .tf-zoom-in,
+  .tf-pop-in,
+  .tf-float-soft,
+  .tf-pulse-dot,
+  .tf-aurora {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* ===== Transition into the conversation view after the first message ===== */
+@keyframes wr-chat-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+    filter: blur(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+.wr-chat-enter {
+  animation: wr-chat-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wr-chat-enter {
+    animation: none;
+  }
+}
+
+/* ===== Presentation-deck shadow on stacked Tools slides ===== */
+.tf-slide-shadow {
+  box-shadow: 0 -30px 60px -20px color-mix(in oklab, var(--foreground) 25%, transparent);
+}
+
+/* ===== Tool card — hover & entrance choreography ===== */
+.tf-tool-card {
+  transition:
+    transform 600ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 600ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 600ms ease;
+  will-change: transform;
+}
+@media (hover: hover) and (pointer: fine) {
+  .tf-tool-card:hover {
+    transform: translateY(-6px) scale(1.005);
+    box-shadow:
+      0 -30px 60px -20px color-mix(in oklab, var(--foreground) 28%, transparent),
+      0 40px 80px -30px color-mix(in oklab, var(--foreground) 35%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tf-tool-card {
+    transition: none;
+  }
+  .tf-tool-card:hover {
+    transform: none;
+  }
+}
+
+/* ===== Analytics smackdown — animated comparison bars ===== */
+@keyframes tf-bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.tf-bar-fill {
+  display: block;
+  height: 100%;
+  transform-origin: left center;
+  transform: scaleX(0);
+  animation: tf-bar-grow 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--bar-delay, 0ms);
+}
+@keyframes tf-count-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+.tf-laser-dot {
+  animation: tf-count-pulse 1.8s ease-in-out infinite;
+}
+
+/* ===== Full-screen mobile menu animations ===== */
+@keyframes tf-menu-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes tf-menu-overlay-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes tf-menu-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.96);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+@keyframes tf-menu-line-in {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes tf-menu-blob {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(20px, -30px) scale(1.08);
+  }
+  66% {
+    transform: translate(-25px, 20px) scale(0.94);
+  }
+}
+.tf-menu-overlay {
+  animation: tf-menu-overlay-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.tf-menu-overlay[data-state="closing"] {
+  animation: tf-menu-overlay-out 0.3s cubic-bezier(0.4, 0, 1, 1) both;
+}
+.tf-menu-item {
+  opacity: 0;
+  animation: tf-menu-item-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--menu-delay, 0ms);
+}
+.tf-menu-line {
+  transform-origin: left center;
+  transform: scaleX(0);
+  animation: tf-menu-line-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--menu-delay, 0ms);
+}
+.tf-menu-blob {
+  animation: tf-menu-blob 14s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* ===== Chat assistant reply: top-down fade-in for each block ===== */
+@keyframes tf-fade-down {
+  from {
+    opacity: 0;
+    transform: translateY(-14px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+.tf-prose > * {
+  animation: tf-fade-down 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Keep streamed code blocks visually stable while their contents grow. */
+.tf-chat-page .tf-markdown-code-block,
+.tf-chat-page .tf-markdown-code-block code {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+  filter: none !important;
+  will-change: auto;
+}
+
+/* Keep assistant responses on a quiet, slightly deeper surface. */
+.tf-chat-page [aria-label="Assistant reply"].tf-bubble-ai {
+  padding: 0.65rem 0.8rem;
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--background) 92%, #000);
+}
+
+.dark .tf-chat-page [aria-label="Assistant reply"].tf-bubble-ai {
+  background: #050607;
+}
+
+/* Occasional Ultra A/B feedback cards. */
+.tf-ultra-comparison {
+  width: 100%;
+  margin: 0.4rem 0;
+}
+
+.tf-ultra-comparison-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.7rem;
+  color: var(--foreground);
+}
+
+.tf-ultra-comparison-heading strong {
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.tf-ultra-comparison-eyebrow {
+  color: #bf91f5;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tf-ultra-comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.tf-ultra-comparison-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  border: 1px solid color-mix(in srgb, var(--foreground) 15%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--foreground) 4%, var(--background));
+  padding: 0.8rem;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.tf-ultra-comparison-card.is-selected {
+  border-color: #bf91f5;
+  background: color-mix(in srgb, #bf91f5 8%, var(--background));
+}
+
+.tf-ultra-comparison-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+  color: var(--foreground);
+  font-size: 0.73rem;
+  font-weight: 600;
+}
+
+.tf-ultra-comparison-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: #bf91f5;
+}
+
+.tf-ultra-comparison-card .tf-prose {
+  flex: 1;
+  min-height: 3.5rem;
+  font-size: 0.82rem;
+}
+
+.tf-ultra-comparison-choice {
+  width: 100%;
+  min-height: 2.15rem;
+  margin-top: 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 20%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.tf-ultra-comparison-choice:not(:disabled):hover {
+  border-color: #bf91f5;
+  background: #bf91f5;
+  color: #120b1d;
+}
+
+.tf-ultra-comparison-choice:disabled {
+  cursor: default;
+  opacity: 0.62;
+}
+
+.tf-ultra-comparison-card.is-selected .tf-ultra-comparison-choice {
+  border-color: #bf91f5;
+  background: #bf91f5;
+  color: #120b1d;
+  opacity: 1;
+}
+
+.tf-ultra-comparison-footer {
+  margin: 0.65rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .tf-ultra-comparison-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.18rem;
+  }
+
+  .tf-ultra-comparison-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* File cards can be edited, previewed, copied, and downloaded in-place. */
+.tf-file-preview {
+  min-height: 8rem;
+  max-height: 28rem;
+  overflow: auto;
+  background: var(--background);
+}
+
+.tf-file-preview-frame {
+  display: block;
+  width: 100%;
+  min-height: 18rem;
+  border: 0;
+  background: #fff;
+}
+
+.tf-file-preview-code {
+  margin: 0;
+  min-height: 8rem;
+  padding: 0.9rem 1rem;
+  overflow: auto;
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.tf-file-preview-markdown {
+  max-height: 28rem;
+  padding: 0.9rem 1rem;
+  overflow: auto;
+}
+
+.tf-file-preview .tf-prose > * {
+  animation: none !important;
+}
+
+/* ===== History page — animated entrance ===== */
+@keyframes tf-history-blob {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(40px, -40px) scale(1.1);
+  }
+  66% {
+    transform: translate(-30px, 30px) scale(0.95);
+  }
+}
+.tf-history-blob {
+  animation: tf-history-blob 18s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes tf-history-heading-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+    filter: blur(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+.tf-history-heading {
+  animation: tf-history-heading-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes tf-history-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.96);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+.tf-history-item {
+  opacity: 0;
+  animation: tf-history-item-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.tf-history-empty {
+  animation: tf-history-heading-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 100ms;
+}
+.tf-history-grid > .tf-history-item {
+  /* stagger handled per-item via inline style */
+}
+
+/* ===== Home page text animation pass ===== */
+@keyframes tf-home-text-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+.tf-home-animated :is(h1, h2, h3, h4, p, a, li) {
+  animation: tf-home-text-in 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tf-home-animated :is(h1, h2, h3, h4, p, a, li) {
+    animation: none;
+  }
+}
+
+/* ===== Hero flip-counter words ===== */
+@keyframes tf-flip-in {
+  0% {
+    opacity: 0;
+    transform: translateY(0.72em) rotateX(-72deg);
+    filter: blur(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg);
+    filter: blur(0);
+  }
+}
+@keyframes tf-flip-out {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-0.7em) rotateX(68deg);
+    filter: blur(5px);
+  }
+}
+.tf-flip-slot {
+  position: relative;
+  display: inline-grid;
+  align-items: end;
+  justify-items: start;
+  min-width: 9.3ch;
+  height: 1.05em;
+  perspective: 900px;
+}
+.tf-flip-sizer {
+  grid-area: 1 / 1;
+  visibility: hidden;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.tf-flip-word {
+  grid-area: 1 / 1;
+  display: inline-block;
+  white-space: nowrap;
+  transform-origin: 50% 100%;
+  backface-visibility: hidden;
+  will-change: transform, opacity, filter;
+}
+.tf-flip-word--current {
+  opacity: 1;
+  transform: translateY(0);
+}
+.tf-flip-word--current.is-entering {
+  animation: tf-flip-in 720ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.tf-flip-word--prev.is-leaving {
+  animation: tf-flip-out 620ms cubic-bezier(0.7, 0, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tf-flip-word--current.is-entering,
+  .tf-flip-word--prev.is-leaving {
+    animation: none;
+  }
+}
+
+/* ===== Neurix Preloader ===== */
+.neurix-preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #000;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-family: var(--font-sans);
+}
+.neurix-preloader__inner {
+  position: relative;
+  z-index: 2;
+  width: min(92vw, 880px);
+  padding: 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.5rem;
+}
+.neurix-preloader__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  opacity: 0;
+  transform: translateY(8px);
+  animation: nx-fade-up 700ms cubic-bezier(0.16, 1, 0.3, 1) 100ms forwards;
+}
+.neurix-preloader__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.4);
+}
+.neurix-preloader__wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  font-size: clamp(4.5rem, 16vw, 11rem);
+  line-height: 0.9;
+  perspective: 900px;
+}
+.neurix-preloader__letter {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.5em) rotateX(45deg);
+  filter: blur(8px);
+  animation: nx-letter-in 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(180ms + var(--i) * 80ms);
+  transform-origin: 50% 100%;
+}
+.neurix-preloader__period {
+  display: inline-block;
+  color: oklch(0.92 0.18 100);
+  margin-left: 0.05em;
+  opacity: 0;
+  transform: scale(0.4);
+  animation: nx-pop 600ms cubic-bezier(0.34, 1.56, 0.64, 1) 900ms forwards;
+}
+.neurix-preloader__bar {
+  width: min(360px, 70vw);
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  position: relative;
+  opacity: 0;
+  animation: nx-fade-up 600ms cubic-bezier(0.16, 1, 0.3, 1) 600ms forwards;
+}
+.neurix-preloader__bar-fill {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  transform-origin: left center;
+  transform: scaleX(0);
+  animation: nx-bar 1700ms cubic-bezier(0.65, 0, 0.35, 1) 700ms forwards;
+}
+.neurix-preloader__meta {
+  display: flex;
+  width: min(360px, 70vw);
+  justify-content: space-between;
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  opacity: 0;
+  animation: nx-fade-up 600ms cubic-bezier(0.16, 1, 0.3, 1) 800ms forwards;
+}
+.neurix-preloader__curtain {
+  position: absolute;
+  inset: 0;
+  background: var(--background);
+  transform: translateY(100%);
+  z-index: 3;
+  pointer-events: none;
+  transition: transform 900ms cubic-bezier(0.76, 0, 0.24, 1);
+}
+.neurix-preloader.is-exiting .neurix-preloader__inner {
+  opacity: 0;
+  transform: translateY(-12px);
+  transition: opacity 500ms ease, transform 600ms cubic-bezier(0.7, 0, 0.3, 1);
+}
+.neurix-preloader.is-exiting .neurix-preloader__curtain {
+  transform: translateY(0);
+}
+
+@keyframes nx-letter-in {
+  0% {
+    opacity: 0;
+    transform: translateY(0.5em) rotateX(45deg);
+    filter: blur(8px);
+  }
+  60% {
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotateX(0);
+    filter: blur(0);
+  }
+}
+@keyframes nx-fade-up {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes nx-pop {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes nx-bar {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .neurix-preloader__letter,
+  .neurix-preloader__period,
+  .neurix-preloader__eyebrow,
+  .neurix-preloader__bar,
+  .neurix-preloader__bar-fill,
+  .neurix-preloader__meta {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* ---------- App entrance animation (after preloader) ---------- */
+.nx-app-entering #root {
+  animation: nx-app-in 1200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.nx-app-entering #root > * > section:first-child,
+.nx-app-entering #root > section:first-child {
+  animation: nx-hero-in 1400ms cubic-bezier(0.16, 1, 0.3, 1) 100ms both;
+}
+.nx-app-entering header,
+.nx-app-entering [data-site-header] {
+  animation: nx-header-in 900ms cubic-bezier(0.22, 1, 0.36, 1) 200ms both;
+}
+
+@keyframes nx-app-in {
+  0% {
+    opacity: 0;
+    transform: scale(1.04);
+    filter: blur(12px);
+  }
+  60% {
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+@keyframes nx-hero-in {
+  0% {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes nx-header-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nx-app-entering #root,
+  .nx-app-entering #root > section:first-child,
+  .nx-app-entering header,
+  .nx-app-entering [data-site-header] {
+    animation: none;
+  }
+}
+
+/* ===== Minimal editorial home refresh ===== */
+.tf-home-animated {
+  --home-paper: oklch(0.985 0.004 95);
+  position: relative;
+  overflow-x: clip;
+  background: var(--home-paper);
+}
+
+.tf-home-animated::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0.16;
+  background-image: radial-gradient(rgba(0, 0, 0, 0.24) 0.45px, transparent 0.45px);
+  background-size: 5px 5px;
+  mix-blend-mode: multiply;
+}
+
+.tf-home-animated > * {
+  position: relative;
+}
+
+.tf-home-animated .tf-display {
+  font-weight: 650;
+  letter-spacing: -0.055em;
+}
+
+.tf-hero {
+  isolation: isolate;
+  background:
+    linear-gradient(115deg, transparent 0 48%, rgba(0, 0, 0, 0.035) 48.1%, transparent 48.3%),
+    var(--home-paper);
+}
+
+.tf-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.55;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.035) 1px, transparent 1px);
+  background-size: 5rem 5rem;
+  mask-image: linear-gradient(to bottom, black, transparent 75%);
+}
+
+.tf-hero::after {
+  content: "";
+  position: absolute;
+  width: min(42rem, 65vw);
+  aspect-ratio: 1;
+  right: -14rem;
+  top: 12%;
+  z-index: -1;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.12), transparent 68%);
+  filter: blur(16px);
+  animation: tf-hero-breathe 7s ease-in-out infinite;
+}
+
+.tf-hero > div:not(.tf-hero__orbit):not(.tf-hero__spark) {
+  position: relative;
+  z-index: 2;
+}
+
+.tf-hero__orbit,
+.tf-hero__spark {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.tf-hero__orbit {
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  border-radius: 999px;
+  animation: tf-orbit-drift 10s ease-in-out infinite;
+}
+
+.tf-hero__orbit--one {
+  width: min(44rem, 63vw);
+  aspect-ratio: 1;
+  right: -21rem;
+  top: 9%;
+}
+
+.tf-hero__orbit--two {
+  width: min(15rem, 25vw);
+  aspect-ratio: 1;
+  left: 8%;
+  bottom: 11%;
+  opacity: 0.55;
+  animation-delay: -3s;
+}
+
+.tf-hero__spark {
+  width: 1.15rem;
+  aspect-ratio: 1;
+  background: var(--foreground);
+  clip-path: polygon(50% 0, 61% 38%, 100% 50%, 61% 62%, 50% 100%, 39% 62%, 0 50%, 39% 38%);
+  filter: drop-shadow(5px 8px 0 rgba(0, 0, 0, 0.14));
+  animation: tf-spark-float 4.6s ease-in-out infinite;
+}
+
+.tf-hero__spark--one {
+  right: 16%;
+  top: 28%;
+}
+
+.tf-hero__spark--two {
+  left: 22%;
+  bottom: 22%;
+  width: 0.7rem;
+  opacity: 0.55;
+  animation-delay: -1.8s;
+}
+
+.tf-home-animated #about > div > div:nth-child(2),
+.tf-home-animated #why > div > div:last-child,
+.tf-home-animated #use-cases > div > div:last-child {
+  gap: 0.8rem;
+  background: transparent;
+  border: 0;
+}
+
+.tf-home-animated #about > div > div:nth-child(2) > div,
+.tf-home-animated #why > div > div:last-child > div,
+.tf-home-animated #use-cases > div > div:last-child > div {
+  border-radius: 1.35rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--foreground) 22%, transparent);
+  background: var(--foreground);
+  transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 500ms ease;
+}
+
+.tf-home-animated #about > div > div:nth-child(2) > div:hover,
+.tf-home-animated #why > div > div:last-child > div:hover,
+.tf-home-animated #use-cases > div > div:last-child > div:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 22px 44px -28px rgba(0, 0, 0, 0.9);
+}
+
+.tf-home-animated #about > div > div:nth-child(2) > div > div,
+.tf-home-animated #why .tf-card,
+.tf-home-animated #use-cases .tf-card {
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.tf-home-animated #about > div > div:nth-child(2) .text-ink-soft,
+.tf-home-animated #why .tf-card .text-ink-soft,
+.tf-home-animated #use-cases .tf-card .text-ink-soft {
+  color: color-mix(in oklab, var(--background) 68%, transparent);
+}
+
+.tf-home-animated #tools .tf-tool-card {
+  border-top: 0;
+  border-radius: 2rem 2rem 0 0;
+  box-shadow: 0 -18px 50px -34px rgba(0, 0, 0, 0.9);
+}
+
+.tf-home-animated #tools .tf-tool-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(120deg, transparent 20%, rgba(255, 255, 255, 0.28), transparent 52%);
+  transform: translateX(-100%);
+  transition: opacity 350ms ease, transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tf-home-animated #tools .tf-tool-card:hover::before {
+  opacity: 1;
+  transform: translateX(100%);
+}
+
+.tf-home-animated #how {
+  position: relative;
+  overflow: hidden;
+}
+
+.tf-home-animated #how::before {
+  content: "";
+  position: absolute;
+  width: 42rem;
+  height: 42rem;
+  right: -18rem;
+  bottom: -22rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 50%;
+  box-shadow: 0 0 0 4rem rgba(255, 255, 255, 0.025), 0 0 0 8rem rgba(255, 255, 255, 0.02);
+  animation: tf-orbit-drift 12s ease-in-out infinite reverse;
+}
+
+/* The opening screen is intentionally just a quiet progress line at the bottom. */
+.neurix-preloader {
+  align-items: flex-end;
+  justify-content: stretch;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.neurix-preloader__inner {
+  position: absolute;
+  inset: auto 0 0;
+  width: 100%;
+  padding: 0;
+  display: block;
+}
+
+.neurix-preloader__bar {
+  width: 100%;
+  height: 2px;
+  background: color-mix(in oklab, var(--foreground) 14%, transparent);
+  opacity: 1;
+  animation: none;
+}
+
+.neurix-preloader__bar-fill {
+  background: var(--foreground);
+  animation: nx-bar 1500ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.neurix-preloader.is-exiting .neurix-preloader__inner {
+  opacity: 0.3;
+  transform: none;
+  transition: opacity 300ms ease;
+}
+
+@keyframes tf-hero-breathe {
+  0%, 100% { transform: scale(0.94); opacity: 0.65; }
+  50% { transform: scale(1.06); opacity: 1; }
+}
+
+@keyframes tf-orbit-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(0, -12px, 0) rotate(5deg); }
+}
+
+@keyframes tf-spark-float {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(0, -10px, 0) rotate(24deg); }
+}
+
+@media (max-width: 640px) {
+  .tf-hero__orbit--one {
+    right: -13rem;
+    top: 18%;
+  }
+
+  .tf-hero__orbit--two {
+    left: -4rem;
+    bottom: 16%;
+  }
+
+  .tf-hero__spark--one {
+    right: 11%;
+    top: 25%;
+  }
+
+  .tf-home-animated #tools .tf-tool-card {
+    border-radius: 1.35rem 1.35rem 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tf-hero::after,
+  .tf-hero__orbit,
+  .tf-hero__spark,
+  .tf-home-animated #how::before,
+  .neurix-preloader__bar-fill {
+    animation: none;
+  }
+
+  .neurix-preloader__bar-fill {
+    transform: scaleX(1);
+  }
+}
+
+/* ===== Scroll choreography pass ===== */
+.tf-scroll-progress {
+  position: fixed;
+  z-index: 30;
+  top: 50%;
+  right: 1.35rem;
+  width: 1px;
+  height: 6.5rem;
+  transform: translateY(-50%);
+  mix-blend-mode: difference;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.tf-scroll-progress__track,
+.tf-scroll-progress__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 1px;
+}
+
+.tf-scroll-progress__track {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.tf-scroll-progress__fill {
+  height: 100%;
+  background: #fff;
+  transform-origin: top center;
+  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tf-scroll-progress__dot {
+  position: absolute;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.12);
+}
+
+.tf-motion-break {
+  position: relative;
+  height: clamp(5rem, 11vw, 9rem);
+  overflow: hidden;
+  background: var(--home-paper);
+  isolation: isolate;
+}
+
+.tf-motion-break::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -35%;
+  width: 170%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.42) 35%, rgba(0, 0, 0, 0.42) 65%, transparent);
+  animation: tf-break-line 5.5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.tf-motion-break::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: clamp(3rem, 7vw, 6rem);
+  aspect-ratio: 1;
+  border: 1px solid rgba(0, 0, 0, 0.22);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 1.5rem rgba(0, 0, 0, 0.025), 0 0 0 3rem rgba(0, 0, 0, 0.018);
+  animation: tf-break-orbit 8s ease-in-out infinite;
+}
+
+.tf-scroll-panel {
+  position: relative;
+  isolation: isolate;
+}
+
+.tf-scroll-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(105deg, transparent 20%, rgba(255, 255, 255, 0.2) 50%, transparent 80%);
+  transform: translateX(-125%);
+}
+
+.reveal.is-in > .tf-scroll-panel::after,
+.tf-scroll-panel.reveal.is-in::after {
+  animation: tf-panel-sheen 1.45s cubic-bezier(0.16, 1, 0.3, 1) var(--panel-delay, 0ms) both;
+}
+
+.reveal.is-in > .tf-scroll-panel,
+.tf-scroll-panel.reveal.is-in {
+  animation: tf-panel-focus 850ms cubic-bezier(0.16, 1, 0.3, 1) var(--panel-delay, 0ms) both;
+}
+
+.tf-banknote-scene {
+  isolation: isolate;
+}
+
+.tf-banknote-scene::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.45;
+  background: repeating-linear-gradient(115deg, transparent 0 7rem, rgba(255, 255, 255, 0.045) 7.05rem 7.1rem, transparent 7.15rem 14rem);
+  transform: translateX(-18%);
+  animation: tf-banknote-scan 12s linear infinite;
+}
+
+.tf-banknote-scene::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  width: 26rem;
+  aspect-ratio: 1;
+  right: -8rem;
+  top: 10%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2.5rem rgba(255, 255, 255, 0.025), 0 0 0 5rem rgba(255, 255, 255, 0.02);
+  animation: tf-banknote-orbit 11s ease-in-out infinite;
+}
+
+.tf-banknote-scene canvas {
+  animation: tf-banknote-breathe 8s ease-in-out infinite;
+}
+
+.tf-smackdown-scene {
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.tf-smackdown-scene::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.28;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 5rem 5rem;
+  mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
+  animation: tf-grid-drift 18s linear infinite;
+}
+
+@keyframes tf-panel-focus {
+  0% { opacity: 0.62; filter: blur(8px) saturate(0.75); }
+  100% { opacity: 1; filter: blur(0) saturate(1); }
+}
+
+@keyframes tf-panel-sheen {
+  0% { opacity: 0; transform: translateX(-125%); }
+  18% { opacity: 0.28; }
+  100% { opacity: 0; transform: translateX(125%); }
+}
+
+@keyframes tf-break-line {
+  0%, 100% { transform: translateX(-10%); opacity: 0.35; }
+  50% { transform: translateX(10%); opacity: 0.8; }
+}
+
+@keyframes tf-break-orbit {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.84) rotate(0deg); }
+  50% { transform: translate(-50%, -50%) scale(1.12) rotate(180deg); }
+}
+
+@keyframes tf-banknote-scan {
+  from { transform: translateX(-18%); }
+  to { transform: translateX(18%); }
+}
+
+@keyframes tf-banknote-orbit {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(-18px, 12px, 0) rotate(-12deg); }
+}
+
+@keyframes tf-banknote-breathe {
+  0%, 100% { filter: brightness(0.95) contrast(1); }
+  50% { filter: brightness(1.08) contrast(1.08); }
+}
+
+@keyframes tf-grid-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(5rem, 5rem, 0); }
+}
+
+@media (max-width: 640px) {
+  .tf-scroll-progress {
+    right: 0.7rem;
+    height: 4rem;
+  }
+
+  .tf-motion-break {
+    height: 4rem;
+  }
+
+  .tf-banknote-scene::after {
+    width: 15rem;
+    right: -7rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tf-motion-break::before,
+  .tf-motion-break::after,
+  .tf-banknote-scene::before,
+  .tf-banknote-scene::after,
+  .tf-banknote-scene canvas,
+  .tf-smackdown-scene::before,
+  .reveal.is-in > .tf-scroll-panel,
+  .tf-scroll-panel.reveal.is-in,
+  .reveal.is-in > .tf-scroll-panel::after,
+  .tf-scroll-panel.reveal.is-in::after {
+    animation: none;
+  }
+}
+
+/* ===== Minimal mode: quieter surfaces, same motion language ===== */
+.tf-home-animated::before {
+  opacity: 0.06;
+  background-size: 7px 7px;
+}
+
+.tf-hero {
+  background: var(--home-paper);
+}
+
+.tf-hero::before {
+  opacity: 0.22;
+  background: none;
+}
+
+.tf-hero::after {
+  opacity: 0.45;
+  filter: blur(28px);
+}
+
+.tf-hero__orbit--two,
+.tf-hero__spark--two {
+  display: none;
+}
+
+.tf-hero__orbit--one {
+  width: min(36rem, 54vw);
+  right: -18rem;
+  opacity: 0.5;
+}
+
+.tf-hero__spark--one {
+  width: 0.8rem;
+  opacity: 0.6;
+  filter: none;
+}
+
+.tf-home-animated #tools .tf-tool-card {
+  box-shadow: 0 -12px 34px -30px rgba(0, 0, 0, 0.7);
+}
+
+.tf-home-animated #about > div > div:nth-child(2) > div,
+.tf-home-animated #why > div > div:last-child > div,
+.tf-home-animated #use-cases > div > div:last-child > div {
+  border-radius: 1rem;
+  box-shadow: none;
+}
+
+.tf-motion-break {
+  height: clamp(3rem, 6vw, 5rem);
+}
+
+.tf-motion-break::before {
+  opacity: 0.45;
+}
+
+.tf-motion-break::after {
+  width: clamp(2rem, 4vw, 3.5rem);
+  box-shadow: none;
+  opacity: 0.65;
+}
+
+.tf-scroll-progress {
+  right: 1rem;
+  height: 4.5rem;
+  opacity: 0.5;
+}
+
+.dark .tf-home-animated::before {
+  opacity: 0.045;
+}
+
+.dark .tf-hero::before {
+  opacity: 0.16;
+  background: none;
+}
+
+.dark .tf-home-animated #tools .tf-tool-card {
+  box-shadow: 0 -12px 34px -30px rgba(255, 255, 255, 0.28);
+}
+
+@media (max-width: 640px) {
+  .tf-hero__orbit--one {
+    right: -14rem;
+  }
+
+  .tf-scroll-progress {
+    right: 0.55rem;
+    height: 3.5rem;
+  }
+}
+
+/* Keep formerly inverted home sections dark when the global theme is dark. */
+.dark .tf-home-animated #how,
+.dark .tf-home-animated #smackdown,
+.dark .tf-home-animated .tf-banknote-scene {
+  background: var(--home-paper);
+  color: var(--foreground);
+  border-color: var(--rule);
+}
+
+.dark .tf-home-animated #how [class*="text-background"],
+.dark .tf-home-animated #smackdown [class*="text-background"],
+.dark .tf-home-animated .tf-banknote-scene [class*="text-background"] {
+  color: var(--foreground) !important;
+}
+
+.dark .tf-home-animated #smackdown [class*="border-background"],
+.dark .tf-home-animated #smackdown [class*="border-border"],
+.dark .tf-home-animated .tf-banknote-scene [class*="border-border"] {
+  border-color: color-mix(in oklab, var(--foreground) 18%, transparent) !important;
+}
+
+.dark .tf-home-animated #smackdown [class*="bg-foreground"],
+.dark .tf-home-animated #smackdown [class*="bg-background"],
+.dark .tf-home-animated .tf-banknote-scene [class*="bg-foreground"] {
+  background-color: var(--home-panel) !important;
+}
+
+.dark .tf-home-animated #smackdown[class*="bg-foreground"],
+.dark .tf-home-animated .tf-banknote-scene[class*="bg-foreground"] {
+  background: var(--home-paper) !important;
+}
+
+.dark .tf-home-animated .tf-banknote-scene .tf-eyebrow {
+  color: color-mix(in oklab, var(--foreground) 65%, transparent) !important;
+}
+
+/* ===== Dark theme correction for the refreshed home ===== */
+.dark .tf-home-animated {
+  --home-paper: oklch(0.075 0 0);
+  --home-panel: oklch(0.12 0 0);
+  background: var(--home-paper);
+  color: var(--foreground);
+}
+
+.dark .tf-home-animated::before {
+  opacity: 0.1;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.3) 0.45px, transparent 0.45px);
+  mix-blend-mode: screen;
+}
+
+.dark .tf-hero {
+  background:
+    linear-gradient(115deg, transparent 0 48%, rgba(255, 255, 255, 0.035) 48.1%, transparent 48.3%),
+    var(--home-paper);
+}
+
+.dark .tf-hero::before {
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+}
+
+.dark .tf-hero::after {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12), transparent 68%);
+}
+
+.dark .tf-hero__orbit {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark .tf-hero__spark {
+  filter: drop-shadow(5px 8px 0 rgba(255, 255, 255, 0.12));
+}
+
+.dark .tf-home-animated #about > div > div:nth-child(2) > div,
+.dark .tf-home-animated #why > div > div:last-child > div,
+.dark .tf-home-animated #use-cases > div > div:last-child > div {
+  border-color: color-mix(in oklab, var(--foreground) 24%, transparent);
+  background: var(--foreground);
+}
+
+.dark .tf-home-animated #about > div > div:nth-child(2) > div > div,
+.dark .tf-home-animated #why .tf-card,
+.dark .tf-home-animated #use-cases .tf-card {
+  background: var(--home-panel);
+  color: var(--foreground);
+}
+
+.dark .tf-home-animated #about > div > div:nth-child(2) .text-ink-soft,
+.dark .tf-home-animated #why .tf-card .text-ink-soft,
+.dark .tf-home-animated #use-cases .tf-card .text-ink-soft {
+  color: color-mix(in oklab, var(--foreground) 62%, transparent);
+}
+
+.dark .tf-home-animated #tools .tf-tool-card {
+  box-shadow: 0 -18px 50px -34px rgba(255, 255, 255, 0.35);
+}
+
+.dark .tf-motion-break::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5) 35%, rgba(255, 255, 255, 0.5) 65%, transparent);
+}
+
+.dark .tf-motion-break::after {
+  border-color: rgba(255, 255, 255, 0.24);
+  box-shadow: 0 0 0 1.5rem rgba(255, 255, 255, 0.03), 0 0 0 3rem rgba(255, 255, 255, 0.02);
+}
