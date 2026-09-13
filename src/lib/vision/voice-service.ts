@@ -6,6 +6,7 @@ type SpeechSession = {
   onend: (() => void) | null;
   start(): void; abort(): void;
 };
+type LiveVoiceCallbacks = { onText: (text: string) => void; onState: (active: boolean) => void; onError: (text: string) => void };
 type SpeechConstructor = new () => SpeechSession;
 type SpeechWindow = Window & { SpeechRecognition?: SpeechConstructor; webkitSpeechRecognition?: SpeechConstructor };
 
@@ -21,6 +22,10 @@ export class VoiceService {
   private audio: HTMLAudioElement | null = null;
   private objectUrl: string | null = null;
   private speechVersion = 0;
+  private liveCallbacks: LiveVoiceCallbacks | null = null;
+  private liveBuffer = '';
+  private livePauseTimer: number | null = null;
+  private liveRestartTimer: number | null = null;
 
   /** Call directly from a tap/submit, before waiting for an AI response. */
   unlock() {
@@ -57,22 +62,55 @@ export class VoiceService {
     const browser = window as SpeechWindow;
     const Constructor = browser.SpeechRecognition || browser.webkitSpeechRecognition;
     if (!Constructor) { onError('Live voice is unavailable in this browser.'); onState(false); return; }
-    const recognition = new Constructor();
-    this.recognition = recognition;
-    recognition.lang = navigator.language || 'en-US';
-    recognition.continuous = true;
-    recognition.interimResults = false;
-    recognition.onresult = event => {
-      const text = Array.from(event.results).filter(result => result.isFinal).map(result => result[0].transcript).join(' ').trim();
-      if (text) onText(text);
+    this.liveCallbacks = { onText, onState, onError };
+    this.liveBuffer = '';
+    const startRecognition = () => {
+      if (!this.liveCallbacks || this.recognition) return;
+      const recognition = new Constructor();
+      this.recognition = recognition;
+      recognition.lang = navigator.language || 'en-US';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.onresult = event => {
+        let interim = '';
+        for (const result of Array.from(event.results)) {
+          const transcript = result[0].transcript;
+          if (result.isFinal) this.liveBuffer = `${this.liveBuffer} ${transcript}`.trim();
+          else interim += transcript;
+        }
+        if (interim.trim()) {
+          if (this.livePauseTimer !== null) window.clearTimeout(this.livePauseTimer);
+          this.livePauseTimer = window.setTimeout(() => this.flushLiveBuffer(), 900);
+        }
+        if (this.liveBuffer && !interim.trim()) {
+          if (this.livePauseTimer !== null) window.clearTimeout(this.livePauseTimer);
+          this.livePauseTimer = window.setTimeout(() => this.flushLiveBuffer(), 850);
+        }
+      };
+      recognition.onerror = event => {
+        if (event.error === 'aborted' || event.error === 'no-speech') return;
+        if (event.error === 'not-allowed') { this.liveCallbacks?.onError('Microphone access is off. Allow it in browser settings.'); this.stopLive(); }
+        else this.liveCallbacks?.onError('Live voice could not connect.');
+      };
+      recognition.onend = () => {
+        this.recognition = null;
+        if (this.liveCallbacks) {
+          this.liveRestartTimer = window.setTimeout(startRecognition, 180);
+        }
+      };
+      try { recognition.start(); this.liveCallbacks.onState(true); } catch { this.recognition = null; this.liveRestartTimer = window.setTimeout(startRecognition, 300); }
     };
-    recognition.onerror = event => {
-      if (event.error === 'aborted' || event.error === 'no-speech') return;
-      onError(event.error === 'not-allowed' ? 'Microphone access is off. Allow it in browser settings.' : 'Live voice could not connect.');
-      onState(false);
-    };
-    recognition.onend = () => { this.recognition = null; onState(false); };
-    try { recognition.start(); onState(true); } catch { this.recognition = null; onError('Live voice could not start.'); onState(false); }
+    startRecognition();
+  }
+  private flushLiveBuffer() {
+    const text = this.liveBuffer.trim();
+    this.liveBuffer = '';
+    if (text) this.liveCallbacks?.onText(text);
+  }
+  private stopLive() {
+    if (this.livePauseTimer !== null) window.clearTimeout(this.livePauseTimer);
+    if (this.liveRestartTimer !== null) window.clearTimeout(this.liveRestartTimer);
+    this.livePauseTimer = null; this.liveRestartTimer = null; this.liveCallbacks = null;
   }
   speak(text: string, onError: (message: string) => void = () => {}, language?: string, reportFailure = true) {
     const clean = text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/[*#`]/g, '').trim();
@@ -126,6 +164,7 @@ export class VoiceService {
     this.clearAudio();
   }
   stop() {
+    this.stopLive();
     if (this.recognition) {
       this.recognition.onresult = null;
       this.recognition.onerror = null;
