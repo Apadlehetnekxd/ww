@@ -196,17 +196,19 @@ function VisionPage() {
   const pointed = frame.objects.find(object => object.id === frame.selectedId);
   const fallbackId = frame.pointing ? rankPointingTarget(frame.pointing, frame.objects, null, videoRef.current && videoRef.current.videoHeight ? videoRef.current.videoWidth / videoRef.current.videoHeight : 1) : null;
   const detectedTarget = pointed ?? frame.objects.find(object => object.id === fallbackId) ?? null;
-  const pointingTarget = frame.pointing ? (() => {
-    const distance = 0.42;
-    const x = Math.max(0.08, Math.min(0.92, frame.pointing.origin.x + frame.pointing.direction.x * distance));
-    const y = Math.max(0.12, Math.min(0.82, frame.pointing.origin.y + frame.pointing.direction.y * distance));
-    return { id: 'pointing-target', type: 'pointed-object', label: detectedTarget?.label || 'Tap to identify', confidence: detectedTarget?.confidence || 0.25, firstSeen: 0, lastSeen: Date.now(), observations: 1, region: { x: x - 0.09, y: y - 0.09, width: 0.18, height: 0.18 } } satisfies VisionObject;
-  })() : null;
+  const pointingTarget = (() => {
+    const handTip = frame.hand?.[8];
+    const point = frame.pointing ? { x: frame.pointing.origin.x + frame.pointing.direction.x * 0.42, y: frame.pointing.origin.y + frame.pointing.direction.y * 0.42 } : handTip;
+    if (!point) return null;
+    const x = Math.max(0.08, Math.min(0.92, point.x));
+    const y = Math.max(0.12, Math.min(0.82, point.y));
+    return { id: 'pointing-target', type: 'pointed-object', label: detectedTarget?.label && detectedTarget.label !== 'Visible object' ? detectedTarget.label : 'Tap to identify', confidence: detectedTarget?.confidence || 0.25, firstSeen: 0, lastSeen: Date.now(), observations: 1, region: { x: x - 0.09, y: y - 0.09, width: 0.18, height: 0.18 } } satisfies VisionObject;
+  })();
   const target = detectedTarget ?? pointingTarget;
   const visibleObjects = frame.objects.length ? frame.objects : (pointingTarget ? [pointingTarget] : []);
   const targetPosition = target && videoRef.current && stage.current
     ? frameToViewport({ x: target.region.x + target.region.width / 2, y: target.region.y + target.region.height / 2 }, videoRef.current, stage.current.getBoundingClientRect()) : null;
-  const targetVisible = targetPosition && targetPosition.x >= 12 && targetPosition.x <= viewport.width - 12 && targetPosition.y >= 24 && targetPosition.y <= viewport.height - 80;
+  const targetVisible = Boolean(targetPosition && targetPosition.x >= 12 && targetPosition.x <= viewport.width - 12 && targetPosition.y >= 24 && targetPosition.y <= viewport.height - 80);
   const progress = Math.round(metrics.progress * 100);
   const scanning = ['scanning', 'understood', 'revealing'].includes(phase);
   const localHttp = !window.isSecureContext && location.port === '3000';
@@ -354,9 +356,16 @@ function VisionPage() {
 
       {phase === 'live' && <>
         <button className="vision-touch-surface" aria-label="Explore camera view" onClick={onCameraTap} />
-  {target && targetVisible && <button className="vision-object-label" style={{ left: targetPosition.x, top: targetPosition.y }} onClick={() => { setSelected(target); setSheet('object'); }}>
+  {target && targetVisible && <button className={`vision-object-label ${selected?.id === target.id ? 'is-selected' : ''}`} style={{ left: targetPosition.x, top: targetPosition.y }} onClick={() => { setSelected(target); setSheet('object'); }}>
   <span className="vision-object-dot" /><span className="vision-object-line" /><span className="vision-object-name">{target.label && target.label !== 'Visible object' ? target.label : 'Tap to identify'}</span>
   </button>}
+  {selected && selected.id !== 'pointing-target' && videoRef.current && stage.current && (() => {
+    const region = selected.region;
+    const bounds = stage.current.getBoundingClientRect();
+    const topLeft = frameToViewport({ x: region.x, y: region.y }, videoRef.current, bounds);
+    const bottomRight = frameToViewport({ x: region.x + region.width, y: region.y + region.height }, videoRef.current, bounds);
+    return <div className="vision-selection-box" style={{ left: topLeft.x, top: topLeft.y, width: Math.max(44, bottomRight.x - topLeft.x), height: Math.max(44, bottomRight.y - topLeft.y) }} aria-hidden="true"><span /><span /><span /><span /></div>;
+  })()}
   {visibleObjects.filter(object => object.id !== target?.id).map((object) => {
     if (!videoRef.current || !stage.current) return null;
     const position = frameToViewport({ x: object.region.x + object.region.width / 2, y: object.region.y + object.region.height / 2 }, videoRef.current, stage.current.getBoundingClientRect());
