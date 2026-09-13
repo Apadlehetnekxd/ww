@@ -4,6 +4,8 @@ import { SiteHeader } from "@/components/site-header";
 import { Reveal } from "@/components/reveal";
 import { Loader2, Mail, Lock, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
+const authConfigured = Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
@@ -33,6 +35,10 @@ function AuthPage() {
   }, [user, authLoading, navigate]);
 
   const handleGoogle = async () => {
+    if (!authConfigured) {
+      toast.info("Sign-in is unavailable in this preview.");
+      return;
+    }
     setBusy(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -49,6 +55,10 @@ function AuthPage() {
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!authConfigured) {
+      toast.info("Sign-in is unavailable in this preview.");
+      return;
+    }
     setBusy(true);
     try {
       if (mode === "signup") {
@@ -97,7 +107,7 @@ function AuthPage() {
             <div className="space-y-4">
               <button
                 onClick={handleGoogle}
-                disabled={busy}
+                disabled={busy || !authConfigured}
                 className="w-full inline-flex items-center justify-center gap-3 h-12 rounded-full border border-border bg-cream/40 hover:bg-cream transition-colors text-sm font-medium disabled:opacity-60"
               >
                 <svg className="size-5" viewBox="0 0 24 24" aria-hidden="true">
@@ -144,7 +154,7 @@ function AuthPage() {
                 </div>
                 <button
                   type="submit"
-                  disabled={busy}
+                  disabled={busy || !authConfigured}
                   className="w-full inline-flex items-center justify-center gap-2 h-12 rounded-full bg-foreground text-background hover:bg-foreground/90 transition-colors text-sm font-medium disabled:opacity-60"
                 >
                   {busy ? (

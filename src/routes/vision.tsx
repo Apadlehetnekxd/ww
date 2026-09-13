@@ -42,7 +42,15 @@ function VisionPage() {
   const [spoken, setSpoken] = useState(true);
   const [speechError, setSpeechError] = useState('');
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
+  const [phoneOnly, setPhoneOnly] = useState<boolean | null>(null);
   const questionDraft = useRef(question);
+
+  useEffect(() => {
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isPhoneUserAgent = /android.*mobile|iphone|ipod|windows phone|blackberry|opera mini|mobile safari/.test(userAgent);
+    const isSmallTouchDevice = navigator.maxTouchPoints > 0 && window.matchMedia('(max-width: 600px)').matches;
+    setPhoneOnly(isPhoneUserAgent || isSmallTouchDevice);
+  }, []);
 
   useEffect(() => {
     const observer = new ResizeObserver(entries => {
@@ -229,6 +237,26 @@ function VisionPage() {
         </section>
       </main>
     );
+  }
+
+  if (phoneOnly === false) {
+    return (
+      <main className="vision-app vision-auth-gate">
+        <section className="vision-entry" aria-labelledby="vision-phone-only-title">
+          <div className="vision-access-badges" aria-label="Vision access status">
+            <span>PHONE ONLY</span>
+            <span>CAMERA FEATURE</span>
+          </div>
+          <h1 id="vision-phone-only-title">VISION IS PHONE ONLY</h1>
+          <p className="vision-secondary">This feature is available only on a phone. Open Vision on an iPhone or Android phone to use the camera and hand tracking.</p>
+          <Link to="/" className="vision-back"><ArrowLeft size={12} /> Back to Neurix</Link>
+        </section>
+      </main>
+    );
+  }
+
+  if (phoneOnly === null) {
+    return <main className="vision-app vision-auth-gate"><section className="vision-entry"><p>Checking device compatibility…</p></section></main>;
   }
 
   return (
