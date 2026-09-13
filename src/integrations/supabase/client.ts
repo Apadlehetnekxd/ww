@@ -38,7 +38,7 @@ const createSupabaseClient = (): SupabaseClient<Database> => {
       console.warn('[Supabase] Invalid API key format. The key should be a JWT token starting with "eyJ". Please check your VITE_SUPABASE_PUBLISHABLE_KEY.');
     }
     
-    const authError = { message: 'Supabase is not configured. Please add a valid VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY (anon public key from Supabase dashboard).' };
+    const authError = { message: 'Sign-in is unavailable until authentication is configured.' };
     
     // Return a mock client that doesn't throw errors
     return {
