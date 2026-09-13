@@ -7,6 +7,7 @@ import { snapshotFrame } from '@/lib/vision/ai-service';
 import type { RecognitionFrame, ScanMetrics } from '@/lib/vision/types';
 
 export type VisionPhase = 'permission' | 'requesting' | 'scanning' | 'understood' | 'revealing' | 'live' | 'paused' | 'error';
+export type DepthStatus = 'checking' | 'available' | 'unavailable';
 const initialMetrics: ScanMetrics = {
   scanConfidence: 0, sceneCoverage: 0, viewpointCoverage: 0, featureStability: 0,
   objectCoverage: 0, progress: 0, complete: false, instruction: 'Move slowly around the room.', stablePoints: 0,
@@ -30,6 +31,7 @@ export function useVisionSession() {
   const [frame, setFrame] = useState(emptyFrame);
   const [error, setError] = useState('');
   const [recognitionStatus, setRecognitionStatus] = useState('');
+  const [depthStatus, setDepthStatus] = useState<DepthStatus>('checking');
 
   const changePhase = useCallback((next: VisionPhase) => { phaseRef.current = next; setPhase(next); }, []);
   const release = useCallback(() => {
@@ -107,6 +109,14 @@ export function useVisionSession() {
   }, [changePhase, release]);
 
   useEffect(() => {
+    let cancelled = false;
+    const xr = (navigator as Navigator & { xr?: { isSessionSupported?: (mode: string) => Promise<boolean> } }).xr;
+    if (!xr?.isSessionSupported) { setDepthStatus('unavailable'); return; }
+    void xr.isSessionSupported('immersive-ar').then(supported => { if (!cancelled) setDepthStatus(supported ? 'available' : 'unavailable'); }).catch(() => { if (!cancelled) setDepthStatus('unavailable'); });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
     const onOrientation = (event: DeviceOrientationEvent) => {
       motion.current.setOrientation(event.alpha, event.beta);
       scanner.current?.setOrientation(motion.current.alpha, motion.current.beta);
@@ -147,5 +157,5 @@ export function useVisionSession() {
   }, [changePhase, release]);
 
   const requestAnalysis = useCallback(() => recognition.current?.requestAnalysis(), []);
-  return { videoRef, canvasRef, phase, metrics, frame, error, recognitionStatus, scanImages, start, requestAnalysis };
+  return { videoRef, canvasRef, phase, metrics, frame, error, recognitionStatus, depthStatus, scanImages, start, requestAnalysis };
 }
