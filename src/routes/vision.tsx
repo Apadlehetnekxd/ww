@@ -190,6 +190,24 @@ function VisionPage() {
   const localHttp = !window.isSecureContext && location.port === '3000';
   const secureCameraUrl = `https://${location.hostname}:3443/vision`;
 
+  const searchCurrentView = () => {
+    const objectLabel = selected?.label || frame.objects[0]?.label || 'object in camera view';
+    const query = encodeURIComponent(`identify and search for ${objectLabel}`);
+    window.open(`https://www.google.com/search?tbm=isch&q=${query}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const sendCurrentViewToChat = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    const image = snapshotFrame(video);
+    window.sessionStorage.setItem('neurix-vision-chat-handoff', JSON.stringify({
+      image,
+      label: selected?.label || frame.objects[0]?.label || 'camera view',
+      question: question.trim() || 'What am I looking at in this image?'
+    }));
+    window.location.href = '/chat';
+  };
+
   const submit = (event: FormEvent) => {
     event.preventDefault(); setSpeechError('');
     if (spoken) voice.current.unlock();
@@ -317,7 +335,8 @@ function VisionPage() {
         <div className="vision-sheet-actions">
           <button onClick={() => openAsk(selected)}><AudioLines size={16} /> Ask about this</button>
           <button onClick={() => openAsk(selected, true)}><Scan size={16} /> Inspect</button>
-          <a href={searchObject(selected)} target="_blank" rel="noopener noreferrer"><ArrowUpRight size={16} /> Search</a>
+          <a href={searchObject(selected)} target="_blank" rel="noopener noreferrer"><ArrowUpRight size={16} /> Search web</a>
+          <button onClick={sendCurrentViewToChat}><Send size={16} /> Send to chat</button>
         </div>
         <p className="vision-fine">Search opens web results for this observed category. Online information is separate from what the camera sees.</p>
       </VisionSheet>}
@@ -329,6 +348,10 @@ function VisionPage() {
         {speechError && <p className="vision-fine" role="status">{speechError}</p>}
         {session.recognitionStatus && <p className="vision-fine">{session.recognitionStatus}</p>}
         <form onSubmit={submit}>
+          <div className="vision-sheet-actions">
+            <button type="button" onClick={searchCurrentView}><ArrowUpRight size={16} /> Search web</button>
+            <button type="button" onClick={sendCurrentViewToChat}><Send size={16} /> Send to chat</button>
+          </div>
           <div className="vision-question-input">
             <textarea aria-label="Your question" placeholder="What am I looking at?" value={question} onChange={event => setQuestion(event.target.value)} rows={2} maxLength={2000} />
             <button type="submit" className="vision-send" disabled={!question.trim() || busy} aria-label="Send view and question"><Send size={17} /></button>
