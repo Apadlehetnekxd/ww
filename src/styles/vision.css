@@ -55,7 +55,9 @@
 .vision-app[data-phase='revealing'] .vision-scan-status { opacity: 0; }
 .vision-touch-surface { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; }
 .vision-object-label { position: absolute; display: flex; align-items: center; min-height: 44px; padding: 0; max-width: 160px; border: 0; background: transparent; transform: translateY(-50%); transition: left 220ms linear, top 220ms linear; text-shadow: 0 1px 7px #000; }
-.vision-object-dot { flex: 0 0 5px; height: 5px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px #ffffff12, 0 1px 5px #0004; }
+.vision-object-label { z-index: 5; min-width: 44px; min-height: 34px; }
+.vision-object-dot { flex: 0 0 11px; height: 11px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px #ffffff22, 0 0 18px #fff, 0 1px 5px #0004; animation: vision-target-pulse 1.8s ease-in-out infinite; }
+@keyframes vision-target-pulse { 0%, 100% { transform: scale(.8); opacity: .65; } 50% { transform: scale(1.25); opacity: 1; } }
 .vision-object-line { width: 22px; height: 1px; background: #ffffffa6; margin: 0 7px 0 2px; }
 .vision-object-name { color: #fff; font-size: 12px; font-weight: 450; line-height: 1.5; text-align: left; }
 .vision-live-hint { position: absolute; bottom: max(38px, calc(env(safe-area-inset-bottom) + 20px)); width: 100%; padding: 0 25px; text-align: center; font-size: 12px; color: #fff; text-shadow: 0 1px 8px #000; pointer-events: none; animation: vision-hint 5.5s ease both; }

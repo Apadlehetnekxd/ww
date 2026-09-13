@@ -350,8 +350,8 @@ function VisionPage() {
       </>}
 
       {phase === 'live' && sheet === 'object' && selected && <VisionSheet title={selected.label} onClose={closeSheet}>
-        <p className="vision-secondary">Appears to be:<br />{selected.label}</p>
-        <p className="vision-fine">Visible in this session from the camera view. Exact brand or model is only named after it can be read.</p>
+        <p className="vision-secondary">Pointed target:<br /><strong>{selected.label}</strong></p>
+        <p className="vision-fine">This marker follows the object or hand you point at. Ask Vision to identify it, describe it, or find more about it.</p>
         <div className="vision-object-meta"><Check size={13} /> {selected.observations} observation{selected.observations === 1 ? '' : 's'}</div>
         <div className="vision-sheet-actions">
           <button onClick={() => openAsk(selected)}><AudioLines size={16} /> Ask about this</button>
