@@ -128,52 +128,25 @@ function Hero() {
 }
 
 function VisionSpotlight() {
+  const moments = [["01", "See what is there", "Vision reads the scene around you, turning a camera view into a living layer of context."], ["02", "Ask without limits", "Point at an object, ask a question, and keep exploring until the moment makes sense."], ["03", "Find the next step", "Discover visual matches, useful context, and new directions without leaving Neurix."]];
   return (
-    <section id="vision-spotlight" className="border-b border-border bg-foreground text-background">
-      <div className="max-w-[1400px] w-full mx-auto px-5 sm:px-6 lg:px-10 py-16 sm:py-24 lg:py-32">
-        <div className="grid lg:grid-cols-12 gap-10 lg:gap-16 items-end">
-          <div className="lg:col-span-8">
-            <Reveal variant="up">
-              <div className="flex flex-wrap items-center gap-3 mb-6">
-                <span className="inline-flex items-center rounded-full border border-background/40 px-3 py-1 text-[10px] font-semibold tracking-[0.22em]">NEW</span>
-                <span className="text-background/60 text-xs uppercase tracking-[0.2em]">Neurix Vision</span>
-              </div>
-            </Reveal>
-            <RevealText
-              level={2}
-              text="Point. Ask. Understand."
-              className="tf-display text-5xl sm:text-6xl md:text-8xl leading-[0.88] max-w-[10ch]"
-            />
-            <Reveal variant="up" delay={260}>
-              <p className="mt-8 text-lg sm:text-xl md:text-2xl leading-relaxed text-background/70 max-w-2xl">
-                A new kind of AI experience that sees the world with you. Scan an object, ask anything about it, and discover what is behind the frame.
-              </p>
-            </Reveal>
+    <section id="vision-spotlight" className="vision-showcase border-b border-border bg-foreground text-background overflow-hidden">
+      <div className="vision-lidar" aria-hidden="true">{Array.from({ length: 18 }, (_, index) => <i key={index} />)}</div>
+      <div className="relative max-w-[1400px] w-full mx-auto px-5 sm:px-6 lg:px-10">
+        <div className="min-h-[78svh] flex items-end py-20 sm:py-28 lg:py-40">
+          <div className="relative z-10 max-w-4xl">
+            <Reveal variant="up"><div className="vision-kicker">NEW / NEURIX VISION / FREE TO EXPLORE</div></Reveal>
+            <RevealText level={2} text="Meet Vision" className="vision-title tf-display text-[clamp(4.5rem,18vw,13rem)] leading-[0.78] tracking-[-0.07em]" />
+            <Reveal variant="up" delay={220}><p className="mt-9 max-w-xl text-xl sm:text-2xl leading-relaxed text-background/70">Your camera is no longer just a camera. It is a way to understand the world, ask better questions, and see what comes next.</p></Reveal>
+            <Reveal variant="up" delay={360}><Link to="/vision" className="tf-cta mt-10 inline-flex h-14 items-center gap-4 rounded-full bg-background px-7 text-foreground">Enter Vision <span aria-hidden>→</span></Link></Reveal>
           </div>
-          <Reveal variant="up" delay={360} className="lg:col-span-4">
-            <div className="border-t border-background/30 pt-5">
-              <div className="text-background/50 text-xs uppercase tracking-[0.2em]">Free to explore</div>
-              <p className="mt-4 text-background text-xl leading-snug">No subscription. No credit card. Just open your camera and start discovering.</p>
-              <Link to="/vision" className="tf-cta mt-8 inline-flex items-center justify-center gap-3 rounded-full bg-background text-foreground px-7 h-14 text-base font-medium">
-                Try Vision <span aria-hidden>→</span>
-              </Link>
-            </div>
-          </Reveal>
         </div>
-        <div className="mt-14 sm:mt-20 grid sm:grid-cols-3 gap-px bg-background/30 border-y border-background/30">
-          {[
-            ["01", "See", "Recognize objects and scenes through your camera."],
-            ["02", "Ask", "Get answers about whatever is in front of you."],
-            ["03", "Explore", "Turn one moment into a deeper discovery."],
-          ].map(([number, title, text], index) => (
-            <Reveal key={title} variant="up" delay={index * 100} className="bg-foreground">
-              <div className="py-6 sm:py-8 sm:px-6 border-b sm:border-b-0 sm:border-r last:border-0 border-background/30">
-                <span className="text-background/40 text-xs tracking-[0.2em]">{number}</span>
-                <h3 className="tf-display text-2xl sm:text-3xl mt-8">{title}</h3>
-                <p className="mt-3 text-background/60 leading-relaxed">{text}</p>
-              </div>
-            </Reveal>
-          ))}
+        <div className="grid gap-px bg-background/25 border-y border-background/25 sm:grid-cols-3">
+          {moments.map(([number, title, text], index) => <Reveal key={number} variant="up" delay={index * 120} className="bg-foreground"><article className="min-h-64 py-8 sm:px-6"><span className="text-xs tracking-[0.2em] text-background/45">{number}</span><h3 className="tf-display mt-14 text-3xl sm:text-4xl">{title}</h3><p className="mt-4 leading-relaxed text-background/60">{text}</p></article></Reveal>)}
+        </div>
+        <div className="grid gap-10 py-20 sm:py-28 lg:grid-cols-2 lg:gap-24">
+          <Reveal variant="up"><p className="text-xs uppercase tracking-[0.2em] text-background/45">A new visual language</p><h3 className="tf-display mt-6 text-5xl sm:text-7xl leading-[0.86]">From seeing<br />to knowing.</h3></Reveal>
+          <Reveal variant="up" delay={180}><div className="space-y-6 text-lg leading-relaxed text-background/65"><p>Vision gives every curious moment a second layer. Identify what is in front of you, ask it anything, and follow the thread wherever it leads.</p><p>It is fast, visual, and free to explore. No complicated setup. Just open Vision on your phone and begin.</p><Link to="/vision" className="inline-flex items-center gap-3 border-b border-background/50 pb-2 text-background">Try the new Vision experience <span aria-hidden>→</span></Link></div></Reveal>
         </div>
       </div>
     </section>
