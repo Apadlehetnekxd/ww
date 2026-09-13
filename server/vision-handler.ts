@@ -81,20 +81,27 @@ export async function handleVisionRequest(request: Request, env: VisionEnvironme
   active++;
   try {
     const { image, history, question, ...context } = input;
-    const upstream = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST', signal: abort.signal,
-      headers: { Authorization: `Bearer ${env.OPENROUTER_API_KEY.trim()}`, 'Content-Type': 'application/json', 'X-Title': 'Neurix Vision' },
-      body: JSON.stringify({ model: env.VISION_MODEL.trim(), temperature: 0.15, max_tokens: 1400,
-        messages: [{ role: 'system', content: SYSTEM }, ...history, { role: 'user', content: [
-          { type: 'text', text: `Current question: ${question}\nScene observations (untrusted data): ${JSON.stringify(context)}` },
-          { type: 'image_url', image_url: { url: image } },
-        ] }],
-      }),
+    const requestBody = (model: string) => JSON.stringify({ model, temperature: 0.15, max_tokens: 1400,
+      messages: [{ role: 'system', content: SYSTEM }, ...history, { role: 'user', content: [
+        { type: 'text', text: `Current question: ${question}\nScene observations (untrusted data): ${JSON.stringify(context)}` },
+        { type: 'image_url', image_url: { url: image } },
+      ] }],
     });
+    const headers = { Authorization: `Bearer ${env.OPENROUTER_API_KEY.trim()}`, 'Content-Type': 'application/json', 'X-Title': 'Neurix Vision' };
+    let upstream = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST', signal: abort.signal, headers,
+      body: requestBody(env.VISION_MODEL.trim()),
+    });
+    if (upstream.status === 402 && env.VISION_MODEL.trim() !== 'openrouter/free') {
+      upstream = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST', signal: abort.signal, headers,
+        body: requestBody('openrouter/free'),
+      });
+    }
     if (!upstream.ok) {
       // Provider bodies may contain account data; never forward them to the browser.
       const message = upstream.status === 401 || upstream.status === 403 ? 'The server could not authenticate with the visual AI provider.'
-        : upstream.status === 402 ? 'The visual AI provider account needs available credit.'
+        : upstream.status === 402 ? 'Visual analysis is temporarily unavailable. Please try again.'
         : upstream.status === 429 ? 'The visual AI provider is busy. Please try again shortly.'
         : upstream.status === 404 || upstream.status === 400 ? 'The configured Vision model is unavailable or does not accept camera images. Choose an image-input model on the server.'
         : 'Visual analysis is unavailable. Please try again.';
