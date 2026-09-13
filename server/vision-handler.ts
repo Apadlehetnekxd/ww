@@ -95,16 +95,22 @@ export async function handleVisionRequest(request: Request, env: VisionEnvironme
       body: requestBody(env.VISION_MODEL.trim()),
     });
     const configuredModel = env.VISION_MODEL.trim();
-    if ([400, 404, 402].includes(upstream.status) && configuredModel !== 'google/gemini-2.5-flash') {
+    if ([400, 404].includes(upstream.status) && configuredModel !== 'google/gemini-2.5-flash') {
       upstream = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST', signal: abort.signal, headers,
-        body: requestBody('google/gemini-3.7-flash'),
+        body: requestBody('google/gemini-2.5-flash'),
+      });
+    }
+    if (upstream.status === 402 && configuredModel !== 'google/gemini-2.5-flash-lite') {
+      upstream = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST', signal: abort.signal, headers,
+        body: requestBody('google/gemini-2.5-flash-lite'),
       });
     }
     if (!upstream.ok) {
       // Provider bodies may contain account data; never forward them to the browser.
       const message = upstream.status === 401 || upstream.status === 403 ? 'The server could not authenticate with the visual AI provider.'
-        : upstream.status === 402 ? 'Visual analysis is temporarily unavailable. Please try again.'
+        : upstream.status === 402 ? 'Visual analysis is unavailable because the AI provider rejected the request for billing or credit reasons. Check the OpenRouter account and API key.'
         : upstream.status === 429 ? 'The visual AI provider is busy. Please try again shortly.'
         : upstream.status === 404 || upstream.status === 400 ? 'The configured Vision model is unavailable or does not accept camera images. Choose an image-input model on the server.'
         : 'Visual analysis is unavailable. Please try again.';
