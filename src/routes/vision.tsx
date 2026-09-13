@@ -356,9 +356,16 @@ function VisionPage() {
 
       {phase === 'live' && <>
         <button className="vision-touch-surface" aria-label="Explore camera view" onClick={onCameraTap} />
-  {target && targetVisible && <button className="vision-object-label" style={{ left: targetPosition.x, top: targetPosition.y }} onClick={() => { setSelected(target); setSheet('object'); }}>
+  {target && targetVisible && <button className={`vision-object-label ${selected?.id === target.id ? 'is-selected' : ''}`} style={{ left: targetPosition.x, top: targetPosition.y }} onClick={() => { setSelected(target); setSheet('object'); }}>
   <span className="vision-object-dot" /><span className="vision-object-line" /><span className="vision-object-name">{target.label && target.label !== 'Visible object' ? target.label : 'Tap to identify'}</span>
   </button>}
+  {selected && selected.id !== 'pointing-target' && videoRef.current && stage.current && (() => {
+    const region = selected.region;
+    const bounds = stage.current.getBoundingClientRect();
+    const topLeft = frameToViewport({ x: region.x, y: region.y }, videoRef.current, bounds);
+    const bottomRight = frameToViewport({ x: region.x + region.width, y: region.y + region.height }, videoRef.current, bounds);
+    return <div className="vision-selection-box" style={{ left: topLeft.x, top: topLeft.y, width: Math.max(44, bottomRight.x - topLeft.x), height: Math.max(44, bottomRight.y - topLeft.y) }} aria-hidden="true"><span /><span /><span /><span /></div>;
+  })()}
   {visibleObjects.filter(object => object.id !== target?.id).map((object) => {
     if (!videoRef.current || !stage.current) return null;
     const position = frameToViewport({ x: object.region.x + object.region.width / 2, y: object.region.y + object.region.height / 2 }, videoRef.current, stage.current.getBoundingClientRect());
