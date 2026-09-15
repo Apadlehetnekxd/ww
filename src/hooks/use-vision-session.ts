@@ -63,7 +63,8 @@ export function useVisionSession() {
       const video = videoRef.current;
       await camera.current.start(video);
       if (version !== generation.current) return;
-      const scan = new ScanEngine(video, canvasRef.current, value => {
+      const shouldRunScan = window.localStorage.getItem('neurix-vision-initial-scan-complete') !== '1';
+      const scan = shouldRunScan ? new ScanEngine(video, canvasRef.current, value => {
         if (version !== generation.current) return;
         setMetrics(value);
         if (value.complete && phaseRef.current === 'scanning') {
@@ -78,16 +79,21 @@ export function useVisionSession() {
             }, 550));
           }, 550));
         }
-      });
+      }) : null;
       scanner.current = scan;
-      await scan.start();
-      if (version !== generation.current) { scan.stop(); return; }
-      changePhase('scanning');
-      const captureTimer = window.setInterval(() => {
-        if (phaseRef.current !== 'scanning' || video.readyState < 2) return;
-        try { const image = snapshotFrame(video); if (!scanImages.current.includes(image)) scanImages.current = [...scanImages.current.slice(-5), image]; } catch { /* camera can be between frames */ }
-      }, 360);
-      timers.current.push(captureTimer);
+      if (scan) {
+        await scan.start();
+        if (version !== generation.current) { scan.stop(); return; }
+        window.localStorage.setItem('neurix-vision-initial-scan-complete', '1');
+        changePhase('scanning');
+        const captureTimer = window.setInterval(() => {
+          if (phaseRef.current !== 'scanning' || video.readyState < 2) return;
+          try { const image = snapshotFrame(video); if (!scanImages.current.includes(image)) scanImages.current = [...scanImages.current.slice(-5), image]; } catch { /* camera can be between frames */ }
+        }, 240);
+        timers.current.push(captureTimer);
+      } else {
+        changePhase('live');
+      }
       const detector = new RecognitionController(video, next => {
         if (version !== generation.current) return;
         setFrame(next);
@@ -108,6 +114,12 @@ export function useVisionSession() {
       release(); setError(cameraError(cause)); changePhase('error');
     }
   }, [changePhase, release]);
+
+  useEffect(() => {
+    if (phase !== 'live' || !canvasRef.current) return;
+    const context = canvasRef.current.getContext('2d');
+    context?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+  }, [phase]);
 
   useEffect(() => {
     if (!isNativeLidar) return;
