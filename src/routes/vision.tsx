@@ -375,7 +375,7 @@ function VisionPage() {
     const bounds = stage.current.getBoundingClientRect();
     const topLeft = frameToViewport({ x: region.x, y: region.y }, videoRef.current, bounds);
     const bottomRight = frameToViewport({ x: region.x + region.width, y: region.y + region.height }, videoRef.current, bounds);
-    return <div className="vision-selection-box" style={{ left: topLeft.x, top: topLeft.y, width: Math.max(44, bottomRight.x - topLeft.x), height: Math.max(44, bottomRight.y - topLeft.y) }} aria-hidden="true"><span className="vision-selection-contour" /><span className="vision-selection-depth" /><span className="vision-selection-particles" /></div>;
+    return <div className="vision-selection-box" style={{ left: topLeft.x, top: topLeft.y, width: Math.max(44, bottomRight.x - topLeft.x), height: Math.max(44, bottomRight.y - topLeft.y) }} aria-hidden="true"><span className="vision-selection-contour" /><span className="vision-selection-depth" /></div>;
   })()}
   {visibleObjects.filter(object => object.id !== target?.id).map((object) => {
     if (!videoRef.current || !stage.current) return null;
