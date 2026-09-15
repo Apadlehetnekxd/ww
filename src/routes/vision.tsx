@@ -50,6 +50,7 @@ function VisionPage() {
   const [phoneOnly, setPhoneOnly] = useState<boolean | null>(null);
   const questionDraft = useRef(question);
   const scanAnalyzed = useRef(false);
+  const inspectedPointingId = useRef<string | null>(null);
 
   useEffect(() => {
     const userAgent = navigator.userAgent.toLowerCase();
@@ -155,6 +156,15 @@ function VisionPage() {
     scanAnalyzed.current = true;
     void ask('Identify every clearly visible object in this completed scan. Put a short label beside each object and mention uncertainty.', null);
   }, [ask, phase, scanImages]);
+
+  useEffect(() => {
+    if (phase !== 'live' || !frame.selectedId || inspectedPointingId.current === frame.selectedId) return;
+    const object = frame.objects.find(item => item.id === frame.selectedId);
+    if (!object || object.id === 'pointing-target') return;
+    inspectedPointingId.current = object.id;
+    setSelected(object);
+    void ask('Identify the object under my fingertip. Return its exact visible name, what it is used for, and concise useful facts. Do not guess if uncertain.', object);
+  }, [ask, frame.objects, frame.selectedId, phase]);
 
   useEffect(() => {
     if (phase !== 'live') return;
