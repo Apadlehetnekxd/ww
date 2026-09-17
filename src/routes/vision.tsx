@@ -100,6 +100,7 @@ function VisionPage() {
 
   const closeSheet = useCallback(() => {
     setSheet(null); voice.current.stop(); setListening(false);
+    void videoRef.current?.play().catch(() => undefined);
     // Asking for another view continues in the camera. Other requests can be
     // explicitly stopped using the small contextual stop button.
   }, []);
@@ -110,6 +111,7 @@ function VisionPage() {
     const controller = new AbortController();
     request.current = controller;
     setBusy(true); setQuestionError(''); setFollowup(''); pending.current = null;
+    video.pause();
     session.requestAnalysis();
     try {
       const objects = currentFrame.current.objects;

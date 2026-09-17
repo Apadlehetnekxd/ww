@@ -63,7 +63,9 @@ export function useVisionSession() {
       const video = videoRef.current;
       await camera.current.start(video);
       if (version !== generation.current) return;
-      const shouldRunScan = window.localStorage.getItem('neurix-vision-initial-scan-complete') !== '1';
+      const sessionCount = Number(window.localStorage.getItem('neurix-vision-session-count') || '0') + 1;
+      window.localStorage.setItem('neurix-vision-session-count', String(sessionCount));
+      const shouldRunScan = sessionCount % 3 === 1;
       const scan = shouldRunScan ? new ScanEngine(video, canvasRef.current, value => {
         if (version !== generation.current) return;
         setMetrics(value);
