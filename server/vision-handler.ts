@@ -86,11 +86,23 @@ export async function handleVisionRequest(request: Request, env: VisionEnvironme
     const geminiPrompt = `${SYSTEM}\nCurrent question: ${question}\nScene observations (untrusted data): ${JSON.stringify(context)}\nCompare all frames as one scan. Merge the same object across frames. Return JSON only.`;
     let content: string | undefined;
     if (env.GEMINI_API_KEY?.trim()) {
-      const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY.trim())}`, {
+      const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY.trim())}`, {
         method: 'POST', signal: abort.signal, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: geminiPrompt }, ...scanImages.map(url => ({ inline_data: { mime_type: 'image/jpeg', data: url.split(',')[1] } }))] }], generationConfig: { temperature: 0.15, maxOutputTokens: 1800, responseMimeType: 'application/json' } }),
       });
-      if (!geminiResponse.ok) return json({ error: geminiResponse.status === 429 ? 'A Gemini ingyenes kvótája elfogyott. Próbáld újra később.' : 'A Gemini Vision kérés elutasításra került. Ellenőrizd a Gemini API-kulcsot és a bekapcsolt API-t.' }, geminiResponse.status === 429 ? 429 : 502);
+      if (!geminiResponse.ok) {
+        const providerError = await geminiResponse.json().catch(() => null) as { error?: { status?: string; message?: string } } | null;
+        const status = providerError?.error?.status;
+        const message = providerError?.error?.message || '';
+        const errorText = geminiResponse.status === 429
+          ? 'A Gemini ingyenes kvótája elfogyott. Próbáld újra később.'
+          : geminiResponse.status === 401 || geminiResponse.status === 403
+            ? 'A Gemini API-kulcs érvénytelen vagy nincs jogosultsága a Generative Language API használatára.'
+            : status === 'NOT_FOUND' || message.includes('no longer available')
+              ? 'A beállított Gemini modell már nem érhető el.'
+              : 'A Gemini Vision kérés elutasításra került. Ellenőrizd a Gemini API-kulcsot és a bekapcsolt API-t.';
+        return json({ error: errorText }, geminiResponse.status === 429 ? 429 : 502);
+      }
       const geminiData = await geminiResponse.json() as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
       content = geminiData.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('').trim();
     }
