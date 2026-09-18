@@ -43,11 +43,11 @@ function AuthPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.origin,
+        redirectTo: import.meta.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || window.location.origin,
       },
     });
     if (error) {
-      toast.error(error.message ?? "Google sign-in failed");
+      toast.error(error.message?.includes("provider") ? "A Google bejelentkezés nincs engedélyezve a Supabase Authban." : error.message ?? "Google sign-in failed");
       setBusy(false);
       return;
     }

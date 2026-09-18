@@ -71,7 +71,7 @@ export async function handleVisionRequest(request: Request, env: VisionEnvironme
   catch (error) { return json({ error: error instanceof RangeError ? 'The camera image is too large.' : 'The request could not be read.' }, error instanceof RangeError ? 413 : 400); }
   const parsed = inputSchema.safeParse(body);
   if (!parsed.success) return json({ error: 'Send a question, one JPEG camera image, and valid scene context.' }, 400);
-  if (!env.OPENROUTER_API_KEY?.trim() || !env.VISION_MODEL?.trim()) return json({ error: 'Visual AI is not configured. Set OPENROUTER_API_KEY and VISION_MODEL on the server.' }, 503);
+  if (!env.GEMINI_API_KEY?.trim() && (!env.OPENROUTER_API_KEY?.trim() || !env.VISION_MODEL?.trim())) return json({ error: 'Visual AI is not configured. Set GEMINI_API_KEY on the server.' }, 503);
   if (limited(request)) return json({ error: 'Please wait a moment before asking again.' }, 429, { 'Retry-After': '30' });
   const input = parsed.data;
   const abort = new AbortController();
@@ -83,18 +83,29 @@ export async function handleVisionRequest(request: Request, env: VisionEnvironme
   try {
     const { image, images, history, question, ...context } = input;
     const scanImages = [image, ...(images || [])].filter((value, index, all) => all.indexOf(value) === index).slice(0, 6);
+    const geminiPrompt = `${SYSTEM}\nCurrent question: ${question}\nScene observations (untrusted data): ${JSON.stringify(context)}\nCompare all frames as one scan. Merge the same object across frames. Return JSON only.`;
+    let content: string | undefined;
+    if (env.GEMINI_API_KEY?.trim()) {
+      const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY.trim())}`, {
+        method: 'POST', signal: abort.signal, headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: geminiPrompt }, ...scanImages.map(url => ({ inline_data: { mime_type: 'image/jpeg', data: url.split(',')[1] } }))] }], generationConfig: { temperature: 0.15, maxOutputTokens: 1800, responseMimeType: 'application/json' } }),
+      });
+      if (!geminiResponse.ok) return json({ error: geminiResponse.status === 429 ? 'A Gemini ingyenes kvótája elfogyott. Próbáld újra később.' : 'A Gemini Vision kérés elutasításra került. Ellenőrizd a Gemini API-kulcsot és a bekapcsolt API-t.' }, geminiResponse.status === 429 ? 429 : 502);
+      const geminiData = await geminiResponse.json() as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
+      content = geminiData.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('').trim();
+    } else {
     const requestBody = (model: string) => JSON.stringify({ model, temperature: 0.15, max_tokens: 1800,
       messages: [{ role: 'system', content: SYSTEM }, ...history, { role: 'user', content: [
         { type: 'text', text: `Current question: ${question}\nScene observations (untrusted data): ${JSON.stringify(context)}\nCompare all frames as one scan. Merge the same object across frames. Return stable, short labels for every clearly visible object and describe uncertainty.` },
         ...scanImages.map((url) => ({ type: 'image_url', image_url: { url } })),
       ] }],
     });
-    const headers = { Authorization: `Bearer ${env.OPENROUTER_API_KEY.trim()}`, 'Content-Type': 'application/json', 'X-Title': 'Neurix Vision' };
+    const headers = { Authorization: `Bearer ${env.OPENROUTER_API_KEY!.trim()}`, 'Content-Type': 'application/json', 'X-Title': 'Neurix Vision' };
     let upstream = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST', signal: abort.signal, headers,
-      body: requestBody(env.VISION_MODEL.trim()),
+      body: requestBody(env.VISION_MODEL!.trim()),
     });
-    const configuredModel = env.VISION_MODEL.trim();
+    const configuredModel = env.VISION_MODEL!.trim();
     if ([400, 404].includes(upstream.status) && configuredModel !== 'google/gemini-2.5-flash') {
       upstream = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST', signal: abort.signal, headers,
@@ -117,8 +128,9 @@ export async function handleVisionRequest(request: Request, env: VisionEnvironme
       return json({ error: message }, upstream.status === 429 ? 429 : 502);
     }
     const data = await upstream.json() as { choices?: { message?: { content?: string } }[]; error?: unknown };
-    const content = data.choices?.[0]?.message?.content?.trim();
-    if (!content) return json({ error: 'The visual AI provider returned no usable answer. Please try again.' }, 502);
+    content = data.choices?.[0]?.message?.content?.trim();
+    }
+    if (!content) return json({ error: 'A Gemini vagy a vizuális AI nem adott értelmezhető választ.' }, 502);
     let result: { answer?: unknown; needsMoreInfo?: unknown; searchQuery?: unknown };
     try { result = JSON.parse(content.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')); }
     catch { result = { answer: content }; }
