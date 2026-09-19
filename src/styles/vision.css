@@ -92,7 +92,11 @@
 .vision-sheet-actions { display: flex; gap: 8px; margin: 25px 0 18px; flex-wrap: wrap; }
 .vision-sheet-actions button, .vision-sheet-actions a { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 1px solid #ffffff25; border-radius: 40px; font-size: 11px; background: transparent; color: #fff; text-decoration: none; }
 .vision-sheet-actions button:first-child { background: #fff; color: #000; border-color: #fff; }
-.vision-answer { font-size: 13px; line-height: 1.8; white-space: pre-wrap; margin: 0 0 20px; color: #ffffffdf; }
+.vision-answer-card { position: relative; margin: 8px 0 18px; padding: 15px 16px 17px; border: 1px solid #ffffff1f; border-radius: 20px; background: linear-gradient(145deg, #ffffff0c, #ffffff03); box-shadow: inset 0 1px 0 #ffffff12, 0 12px 35px #0006; overflow: hidden; }
+.vision-answer-card::after { content: ''; position: absolute; width: 130px; height: 130px; right: -52px; top: -72px; border-radius: 50%; background: #b9ffce18; filter: blur(24px); pointer-events: none; }
+.vision-answer-kicker { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; color: #b9ffce; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 11px; }
+.vision-answer-orb { width: 7px; height: 7px; border-radius: 50%; background: #b9ffce; box-shadow: 0 0 12px #b9ffce; }
+.vision-answer { position: relative; z-index: 1; font-size: 14px; line-height: 1.72; white-space: pre-wrap; margin: 0; color: #ffffffe8; }
 .vision-question-error { color: #fff; border-left: 1px solid #ffffff70; padding-left: 12px; font-size: 12px; line-height: 1.7; margin-bottom: 18px; }
 .vision-lens-results { display: grid; gap: 8px; margin: 0 0 14px; }
 .vision-lens-knowledge { display: grid; gap: 5px; padding: 12px; border: 1px solid #ffffff20; border-radius: 14px; font-size: 12px; line-height: 1.5; }
