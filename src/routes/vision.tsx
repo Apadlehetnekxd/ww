@@ -111,7 +111,6 @@ function VisionPage() {
     const controller = new AbortController();
     request.current = controller;
     setBusy(true); setQuestionError(''); setFollowup(''); pending.current = null;
-    video.pause();
     session.requestAnalysis();
     try {
       const objects = currentFrame.current.objects;
@@ -422,7 +421,7 @@ function VisionPage() {
           {lensBusy && <p className="vision-fine"><LoaderCircle className="vision-spin" size={14} /> Searching visual matches…</p>}
           {lensError && <p className="vision-question-error" role="alert">{lensError}</p>}
           {lens && <div className="vision-lens-results" aria-label="Google Lens results">
-            {lens.knowledge?.title && <div className="vision-lens-knowledge"><strong>{lens.knowledge.title}</strong>{lens.knowledge.description && <span>{lens.knowledge.description}</span>}</div>}
+            {lens.knowledge?.title && <div className="vision-lens-knowledge"><strong>{lens.knowledge.title}</strong>{lens.knowledge.description && <span>{lens.knowledge.description}</span>}{lens.knowledge.link && <a href={lens.knowledge.link} target="_blank" rel="noreferrer">Open image search</a>}</div>}
             {lens.matches.length === 0 && <p className="vision-fine">No visual matches found.</p>}
             {lens.matches.map((match) => <a className="vision-lens-result" href={match.link} target="_blank" rel="noreferrer" key={match.link}>
               {match.thumbnail && <img src={match.thumbnail} alt="" />}

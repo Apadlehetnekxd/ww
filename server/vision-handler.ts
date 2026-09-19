@@ -86,7 +86,7 @@ export async function handleVisionRequest(request: Request, env: VisionEnvironme
     const geminiPrompt = `${SYSTEM}\nCurrent question: ${question}\nScene observations (untrusted data): ${JSON.stringify(context)}\nCompare all frames as one scan. Merge the same object across frames. Return JSON only.`;
     let content: string | undefined;
     if (env.GEMINI_API_KEY?.trim()) {
-      const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY.trim())}`, {
+      const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY.trim())}`, {
         method: 'POST', signal: abort.signal, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: geminiPrompt }, ...scanImages.map(url => ({ inline_data: { mime_type: 'image/jpeg', data: url.split(',')[1] } }))] }], generationConfig: { temperature: 0.15, maxOutputTokens: 1800, responseMimeType: 'application/json' } }),
       });
