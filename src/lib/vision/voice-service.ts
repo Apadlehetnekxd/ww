@@ -78,9 +78,9 @@ export class VoiceService {
           if (result.isFinal) this.liveBuffer = `${this.liveBuffer} ${transcript}`.trim();
           else interim += transcript;
         }
-        if (interim.trim()) {
+        if (interim.trim() && this.liveBuffer) {
           if (this.livePauseTimer !== null) window.clearTimeout(this.livePauseTimer);
-          this.livePauseTimer = window.setTimeout(() => this.flushLiveBuffer(), 900);
+          this.livePauseTimer = window.setTimeout(() => this.flushLiveBuffer(), 650);
         }
         if (this.liveBuffer && !interim.trim()) {
           if (this.livePauseTimer !== null) window.clearTimeout(this.livePauseTimer);

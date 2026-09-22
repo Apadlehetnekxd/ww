@@ -63,13 +63,11 @@ export function useVisionSession() {
       const video = videoRef.current;
       await camera.current.start(video);
       if (version !== generation.current) return;
-      const sessionCount = Number(window.localStorage.getItem('neurix-vision-session-count') || '0') + 1;
-      window.localStorage.setItem('neurix-vision-session-count', String(sessionCount));
-      const shouldRunScan = sessionCount % 3 === 1;
-      const scan = shouldRunScan ? new ScanEngine(video, canvasRef.current, value => {
+      const scanStartedAt = Date.now();
+      const scan = new ScanEngine(video, canvasRef.current, value => {
         if (version !== generation.current) return;
         setMetrics(value);
-        if (value.complete && phaseRef.current === 'scanning') {
+        if (value.complete && Date.now() - scanStartedAt >= 30000 && phaseRef.current === 'scanning') {
           changePhase('understood');
           if (navigator.vibrate) navigator.vibrate(12);
           timers.current.push(window.setTimeout(() => {
@@ -81,12 +79,11 @@ export function useVisionSession() {
             }, 550));
           }, 550));
         }
-      }) : null;
+      });
       scanner.current = scan;
       if (scan) {
         await scan.start();
         if (version !== generation.current) { scan.stop(); return; }
-        window.localStorage.setItem('neurix-vision-initial-scan-complete', '1');
         changePhase('scanning');
         const captureTimer = window.setInterval(() => {
           if (phaseRef.current !== 'scanning' || video.readyState < 2) return;

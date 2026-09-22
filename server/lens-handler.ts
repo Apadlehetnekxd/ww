@@ -4,7 +4,12 @@ type LensResult = { title?: string; link?: string; source?: string; thumbnail?: 
 
 export async function handleLensRequest(request: Request, env: LensEnvironment): Promise<Response> {
   if (request.method !== 'POST') return Response.json({ error: 'Method not allowed.' }, { status: 405 });
-  if (!env.SERPAPI_KEY) return Response.json({ error: 'Visual search is not configured yet.' }, { status: 503 });
+  if (!env.SERPAPI_KEY) {
+    let fallback: { label?: string } = {};
+    try { fallback = await request.json() as { label?: string }; } catch { /* use a generic search fallback */ }
+    const query = fallback.label?.trim() || 'camera object';
+    return Response.json({ matches: [], knowledge: { title: 'Search this view on the web', description: 'Visual search is not configured, so you can continue with a text-based image search.', link: `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(query)}` } });
+  }
 
   let body: { image?: string; label?: string };
   try { body = await request.json() as typeof body; } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }); }
