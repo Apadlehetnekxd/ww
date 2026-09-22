@@ -1,3 +1,4 @@
+import { generateText, gateway } from 'ai';
 import { z } from 'zod';
 export type { VisionEnvironment } from './vision-env';
 import type { VisionEnvironment } from './vision-env';
@@ -71,7 +72,8 @@ export async function handleVisionRequest(request: Request, env: VisionEnvironme
   catch (error) { return json({ error: error instanceof RangeError ? 'The camera image is too large.' : 'The request could not be read.' }, error instanceof RangeError ? 413 : 400); }
   const parsed = inputSchema.safeParse(body);
   if (!parsed.success) return json({ error: 'Send a question, one JPEG camera image, and valid scene context.' }, 400);
-  if (!env.GEMINI_API_KEY?.trim()) return json({ error: 'Visual AI is not configured. Set GEMINI_API_KEY on the server.' }, 503);
+  // The AI Gateway resolves this model with Vercel OIDC in preview/deployments; no provider key is needed.
+  if (!process.env.VERCEL && !process.env.AI_GATEWAY_API_KEY) return json({ error: 'Vercel AI Gateway is not available in this environment.' }, 503);
   if (limited(request)) return json({ error: 'Please wait a moment before asking again.' }, 429, { 'Retry-After': '30' });
   const input = parsed.data;
   const abort = new AbortController();
@@ -85,28 +87,21 @@ export async function handleVisionRequest(request: Request, env: VisionEnvironme
     const scanImages = [image, ...(images || [])].filter((value, index, all) => all.indexOf(value) === index).slice(0, 6);
     const geminiPrompt = `${SYSTEM}\nCurrent question: ${question}\nScene observations (untrusted data): ${JSON.stringify(context)}\nCompare all frames as one scan. Merge the same object across frames. Return JSON only.`;
     let content: string | undefined;
-    if (env.GEMINI_API_KEY?.trim()) {
-      const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY.trim())}`, {
-        method: 'POST', signal: abort.signal, headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: geminiPrompt }, ...scanImages.map(url => ({ inline_data: { mime_type: 'image/jpeg', data: url.split(',')[1] } }))] }], generationConfig: { temperature: 0.15, maxOutputTokens: 1800, responseMimeType: 'application/json' } }),
+    try {
+      const result = await generateText({
+        model: gateway('inclusionai/ling-3.0-flash-vl-free'),
+        system: SYSTEM,
+        messages: [{ role: 'user', content: [{ type: 'text', text: `${geminiPrompt}\nReturn JSON only.` }, ...scanImages.map(url => ({ type: 'image' as const, image: url }))] }],
+        temperature: 0.15,
+        maxOutputTokens: 1800,
+        abortSignal: abort.signal,
       });
-      if (!geminiResponse.ok) {
-        const providerError = await geminiResponse.json().catch(() => null) as { error?: { status?: string; message?: string } } | null;
-        const status = providerError?.error?.status;
-        const message = providerError?.error?.message || '';
-        const errorText = geminiResponse.status === 429
-          ? 'A Gemini ingyenes kvótája elfogyott. Próbáld újra később.'
-          : geminiResponse.status === 401 || geminiResponse.status === 403
-            ? 'A Gemini API-kulcs érvénytelen vagy nincs jogosultsága a Generative Language API használatára.'
-            : status === 'NOT_FOUND' || message.includes('no longer available')
-              ? 'A beállított Gemini modell már nem érhető el.'
-              : 'A Gemini Vision kérés elutasításra került. Ellenőrizd a Gemini API-kulcsot és a bekapcsolt API-t.';
-        return json({ error: errorText }, geminiResponse.status === 429 ? 429 : 502);
-      }
-      const geminiData = await geminiResponse.json() as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
-      content = geminiData.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('').trim();
+      content = result.text.trim();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      return json({ error: message.includes('429') ? 'A Vercel AI Gateway ingyenes kvótája elfogyott. Próbáld újra később.' : 'A Vercel AI Gateway Vision kérés elutasításra került.' }, message.includes('429') ? 429 : 502);
     }
-    if (!content) return json({ error: 'A Gemini vagy a vizuális AI nem adott értelmezhető választ.' }, 502);
+    if (!content) return json({ error: 'A Vercel AI Gateway nem adott értelmezhető választ.' }, 502);
     let result: { answer?: unknown; needsMoreInfo?: unknown; searchQuery?: unknown };
     try { result = JSON.parse(content.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')); }
     catch { result = { answer: content }; }
