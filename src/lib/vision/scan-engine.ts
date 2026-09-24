@@ -6,7 +6,7 @@ import type { ScanFrame, ScanObservation } from './scan-tracker';
 
 /** Owns local frame sampling and the point canvas; the camera stream belongs to the caller. */
 export class ScanEngine {
-  private static readonly maxScanDuration = 2400;
+  private static readonly maxScanDuration = 30000;
   private renderer: PointCloudRenderer | null = null;
   private worker: Worker | null = null;
   private fallbackTracker: ScanTracker | null = null;
