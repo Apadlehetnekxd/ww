@@ -86,15 +86,15 @@ export async function handleVisionRequest(request: Request, env: VisionEnvironme
     const geminiPrompt = `${SYSTEM}\nCurrent question: ${question}\nScene observations (untrusted data): ${JSON.stringify(context)}\nCompare all frames as one scan. Merge the same object across frames. Return JSON only.`;
     let content: string | undefined;
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY.trim())}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY.trim())}`, {
         method: 'POST', signal: abort.signal, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: `${SYSTEM}\n${geminiPrompt}\nReturn JSON only.` }, ...scanImages.map(url => ({ inline_data: { mime_type: 'image/jpeg', data: url.split(',')[1] } }))] }], generationConfig: { temperature: 0.15, maxOutputTokens: 1800, responseMimeType: 'application/json' } }),
       });
       const data = await response.json().catch(() => null) as { candidates?: { content?: { parts?: { text?: string }[] } }[]; error?: { status?: string; message?: string } } | null;
       if (!response.ok) {
         const providerMessage = data?.error?.message || '';
-        const errorMessage = response.status === 429
-          ? 'A Gemini ingyenes kvótája elfogyott. Próbáld újra később.'
+        const errorMessage = response.status === 429 || response.status === 503
+          ? 'A Gemini jelenleg túlterhelt. Próbáld újra néhány másodperc múlva.'
           : response.status === 401 || response.status === 403
             ? 'A Gemini API-kulcs érvénytelen vagy nincs jogosultsága ehhez az API-hoz.'
             : providerMessage.includes('no longer available')
