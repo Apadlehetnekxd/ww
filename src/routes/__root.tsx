@@ -1,4 +1,5 @@
 import { Outlet, Link, createRootRoute, useLocation } from "@tanstack/react-router";
+import { Analytics } from "@vercel/analytics/react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { NeurixPreloader } from "@/components/neurix-preloader";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -41,6 +42,7 @@ function RootComponent() {
           {!isVision && <NeurixPreloader />}
           <Outlet />
           <Toaster />
+          <Analytics />
         </div>
       </AuthProvider>
     </ThemeProvider>
