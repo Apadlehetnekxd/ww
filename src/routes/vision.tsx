@@ -36,6 +36,15 @@ function VisionPage() {
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [identifiedLabels, setIdentifiedLabels] = useState<Record<string, string>>({});
+  const [hoverTarget, setHoverTarget] = useState<SceneObject | null>(null);
+  const hoverCloseTimer = useRef<number | null>(null);
+  const showHoverMenu = (object: SceneObject) => {
+    if (hoverCloseTimer.current !== null) window.clearTimeout(hoverCloseTimer.current);
+    setHoverTarget(object);
+  };
+  const hideHoverMenu = () => {
+    hoverCloseTimer.current = window.setTimeout(() => setHoverTarget(null), 180);
+  };
   const [questionError, setQuestionError] = useState('');
   const [busy, setBusy] = useState(false);
   const [listening, setListening] = useState(false);
@@ -373,9 +382,13 @@ function VisionPage() {
 
       {phase === 'live' && <>
         <button className="vision-touch-surface" aria-label="Explore camera view" onClick={onCameraTap} />
-  {target && targetVisible && <button className={`vision-object-label ${selected?.id === target.id ? 'is-selected' : ''}`} style={{ left: targetPosition.x, top: targetPosition.y }} onClick={() => { setSelected(target); setSheet('object'); }}>
+  {target && targetVisible && <button className={`vision-object-label ${selected?.id === target.id ? 'is-selected' : ''}`} style={{ left: targetPosition.x, top: targetPosition.y }} onPointerEnter={() => showHoverMenu(target)} onPointerLeave={hideHoverMenu} onFocus={() => showHoverMenu(target)} onBlur={hideHoverMenu} onClick={(event) => { event.preventDefault(); showHoverMenu(target); }}>
   <span className="vision-object-dot" /><span className="vision-object-depth" aria-hidden="true" /><span className="vision-object-line" /><span className="vision-object-name">{identifiedLabels[target.id] || (busy ? 'Identifying…' : target.label && target.label !== 'Visible object' ? target.label : 'Object')}</span>
   </button>}
+  {hoverTarget && hoverTarget.id === target?.id && <div className="vision-hover-menu" style={{ left: targetPosition.x, top: Math.max(78, targetPosition.y - 82) }} onPointerEnter={() => showHoverMenu(hoverTarget)} onPointerLeave={hideHoverMenu} role="dialog" aria-label={`Actions for ${identifiedLabels[hoverTarget.id] || hoverTarget.label || 'object'}`}>
+    <div className="vision-hover-menu-title"><span className="vision-ai-pulse" aria-hidden="true" />{identifiedLabels[hoverTarget.id] || hoverTarget.label || 'Object'}</div>
+    <div className="vision-hover-menu-actions"><button onClick={() => { setSelected(hoverTarget); setSheet('object'); }}><AudioLines size={14} /> Ask AI</button><button onClick={() => { setSelected(hoverTarget); setSheet('object'); }}><Search size={14} /> Research</button></div>
+  </div>}
   {selected && selected.id !== 'pointing-target' && videoRef.current && stage.current && (() => {
     const region = selected.region;
     const bounds = stage.current.getBoundingClientRect();
