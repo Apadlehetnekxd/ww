@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type MouseEvent } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowLeft, ArrowUpRight, AudioLines, Check, ExternalLink, LoaderCircle, Mic, Search, Scan, Send, Volume2, VolumeX, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, AudioLines, Check, ChevronUp, ExternalLink, LoaderCircle, Mic, Search, Scan, Send, Volume2, VolumeX, X } from 'lucide-react';
 import { useVisionSession } from '@/hooks/use-vision-session';
 import { VisionSheet } from '@/components/vision/vision-sheet';
 import { HandPoints } from '@/components/vision/hand-points';
@@ -35,6 +35,16 @@ function VisionPage() {
   const [hint, setHint] = useState(false);
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
+  const [identifiedLabels, setIdentifiedLabels] = useState<Record<string, string>>({});
+  const [hoverTarget, setHoverTarget] = useState<SceneObject | null>(null);
+  const hoverCloseTimer = useRef<number | null>(null);
+  const showHoverMenu = (object: SceneObject) => {
+    if (hoverCloseTimer.current !== null) window.clearTimeout(hoverCloseTimer.current);
+    setHoverTarget(object);
+  };
+  const hideHoverMenu = () => {
+    hoverCloseTimer.current = window.setTimeout(() => setHoverTarget(null), 180);
+  };
   const [questionError, setQuestionError] = useState('');
   const [busy, setBusy] = useState(false);
   const [listening, setListening] = useState(false);
@@ -129,6 +139,10 @@ function VisionPage() {
       if (controller.signal.aborted) return;
       history.current = [...history.current, { role: 'user' as const, content: prompt }, { role: 'assistant' as const, content: result.answer }].slice(-16);
       setAnswer(result.answer);
+      if (latestObject) {
+        const firstLine = result.answer.split(/[\n.!?]/).map(line => line.replace(/^[\s*#\d.)-]+/, '').trim()).find(line => line.length >= 3 && line.length <= 46);
+        if (firstLine) setIdentifiedLabels(current => ({ ...current, [latestObject.id]: firstLine }));
+      }
       if (spoken) voice.current.speak(result.needsMoreInfo || result.answer, setSpeechError, undefined, false);
       if (result.needsMoreInfo) {
         const attempts = previous?.attempts ?? 0;
@@ -368,9 +382,12 @@ function VisionPage() {
 
       {phase === 'live' && <>
         <button className="vision-touch-surface" aria-label="Explore camera view" onClick={onCameraTap} />
-  {target && targetVisible && <button className={`vision-object-label ${selected?.id === target.id ? 'is-selected' : ''}`} style={{ left: targetPosition.x, top: targetPosition.y }} onClick={() => { setSelected(target); setSheet('object'); }}>
-  <span className="vision-object-dot" /><span className="vision-object-depth" aria-hidden="true" /><span className="vision-object-line" /><span className="vision-object-name">{target.label && target.label !== 'Visible object' ? target.label : 'Tap to identify'}</span>
+  {target && targetVisible && <button className={`vision-object-label ${selected?.id === target.id ? 'is-selected' : ''}`} style={{ left: targetPosition.x, top: targetPosition.y }} onPointerEnter={() => showHoverMenu(target)} onPointerLeave={hideHoverMenu} onFocus={() => showHoverMenu(target)} onBlur={hideHoverMenu} onClick={(event) => { event.preventDefault(); showHoverMenu(target); }}>
+  <span className="vision-object-dot" /><span className="vision-object-depth" aria-hidden="true" /><span className="vision-object-line" /><span className="vision-object-name">{identifiedLabels[target.id] || (busy ? 'Identifying…' : target.label && target.label !== 'Visible object' ? target.label : 'Object')}</span>
   </button>}
+  {hoverTarget && hoverTarget.id === target?.id && <div className="vision-hover-menu" style={{ left: targetPosition.x, top: Math.max(78, targetPosition.y - 82) }} onPointerEnter={() => showHoverMenu(hoverTarget)} onPointerLeave={hideHoverMenu} role="dialog" aria-label={`Actions for ${identifiedLabels[hoverTarget.id] || hoverTarget.label || 'object'}`}>
+    <button className="vision-hover-menu-disclosure" onClick={() => { setSelected(hoverTarget); setSheet('object'); }}><span className="vision-ai-pulse" aria-hidden="true" /><span><small>OBJECT DETECTED</small><strong>{identifiedLabels[hoverTarget.id] || hoverTarget.label || 'Object'}</strong></span><ChevronUp size={16} /></button>
+  </div>}
   {selected && selected.id !== 'pointing-target' && videoRef.current && stage.current && (() => {
     const region = selected.region;
     const bounds = stage.current.getBoundingClientRect();
@@ -382,7 +399,7 @@ function VisionPage() {
     if (!videoRef.current || !stage.current) return null;
     const position = frameToViewport({ x: object.region.x + object.region.width / 2, y: object.region.y + object.region.height / 2 }, videoRef.current, stage.current.getBoundingClientRect());
     if (position.x < 12 || position.x > viewport.width - 12 || position.y < 24 || position.y > viewport.height - 80) return null;
-    return <button key={object.id} className="vision-object-label vision-object-secondary" style={{ left: position.x, top: position.y }} onClick={() => { setSelected(object); setSheet('object'); }}><span className="vision-object-dot" /><span className="vision-object-line" /><span className="vision-object-name">{object.label && object.label !== 'Visible object' ? object.label : 'Tap to identify'}</span></button>;
+    return <button key={object.id} className="vision-object-label vision-object-secondary" style={{ left: position.x, top: position.y }} onClick={() => { setSelected(object); setSheet('object'); }}><span className="vision-object-dot" /><span className="vision-object-line" /><span className="vision-object-name">{identifiedLabels[object.id] || (busy ? 'Identifying…' : object.label && object.label !== 'Visible object' ? object.label : 'Object')}</span></button>;
   })}
         {hint && !tools && !sheet && !busy && !followup && <p className="vision-live-hint">Point at something. Or tap to explore.</p>}
         {tools && !sheet && <div className="vision-context-tools">
@@ -394,9 +411,10 @@ function VisionPage() {
         {(busy || followup || speechError) && !sheet && <div className={`vision-followup ${busy ? 'is-working' : ''}`} role="status"><span>{speechError || (busy ? <><span className="vision-ai-pulse" aria-hidden="true" /> AI is working on this view…</> : followup)}</span>{!busy && (answer || followup) && <button onClick={readAloud} aria-label="Read aloud"><Volume2 size={15} /></button>}<button onClick={() => { stopQuestion(); setFollowup(''); setSpeechError(''); }} aria-label="Dismiss"><X size={15} /></button></div>}
       </>}
 
-      {phase === 'live' && sheet === 'object' && selected && <VisionSheet title={selected.label} onClose={closeSheet}>
-        <p className="vision-secondary">Pointed target:<br /><strong>{selected.label}</strong></p>
-        <p className="vision-fine">The marker is anchored to the object you point at. Tap it to identify the item, ask the AI for details, or open research with images.</p>
+      {phase === 'live' && sheet === 'object' && selected && <VisionSheet title={identifiedLabels[selected.id] || selected.label || 'Object'} onClose={closeSheet}>
+        {answer && <div className="vision-answer-card vision-object-answer" role="status"><div className="vision-answer-kicker"><span className="vision-answer-orb" /> AI INSIGHT</div><p className="vision-answer">{answer}</p></div>}
+        <p className="vision-secondary">{identifiedLabels[selected.id] || selected.label || 'Object'}</p>
+        <p className="vision-fine">The AI identifies the object, shares a few useful facts, and finds a similar image from the web.</p>
         <div className="vision-object-meta"><Check size={13} /> {selected.observations} observation{selected.observations === 1 ? '' : 's'}</div>
         <div className="vision-sheet-actions">
           <button onClick={() => openAsk(selected)}><AudioLines size={16} /> Ask about this</button>
@@ -422,6 +440,7 @@ function VisionPage() {
           {lensError && <p className="vision-question-error" role="alert">{lensError}</p>}
           {lens && <div className="vision-lens-results" aria-label="Web research results"><div className="vision-research-heading"><span>Research</span><small>Live web matches</small></div>
             {lens.knowledge?.title && <div className="vision-lens-knowledge"><strong>{lens.knowledge.title}</strong>{lens.knowledge.description && <span>{lens.knowledge.description}</span>}{lens.knowledge.link && <a href={lens.knowledge.link} target="_blank" rel="noreferrer">Open image search</a>}</div>}
+            {lens.matches[0]?.thumbnail && <div className="vision-research-hero"><img src={lens.matches[0].thumbnail} alt={lens.matches[0].title || 'Similar object'} /><div><small>SIMILAR FROM THE WEB</small><strong>{lens.matches[0].title}</strong><span>{lens.matches[0].source || 'Visual match'}</span></div></div>}
             {lens.matches.length === 0 && <p className="vision-fine">No visual matches found.</p>}
             {lens.matches.map((match) => <a className="vision-lens-result" href={match.link} target="_blank" rel="noreferrer" key={match.link}>
               {match.thumbnail && <img src={match.thumbnail} alt="" />}

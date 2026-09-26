@@ -83,6 +83,15 @@
 @keyframes vision-target-pulse { 0%, 100% { transform: scale(.8); opacity: .65; } 50% { transform: scale(1.25); opacity: 1; } }
 .vision-object-line { width: 22px; height: 1px; background: #ffffffa6; margin: 0 7px 0 2px; }
 .vision-object-name { color: #fff; font-size: 12px; font-weight: 450; line-height: 1.5; text-align: left; }
+.vision-hover-menu { position: absolute; z-index: 12; width: min(210px, calc(100% - 28px)); padding: 11px; border: 1px solid #ffffff42; border-radius: 20px; background: linear-gradient(145deg, #ffffff24, #07100fe8 58%, #b9ffce10); backdrop-filter: blur(28px) saturate(180%); -webkit-backdrop-filter: blur(28px) saturate(180%); box-shadow: inset 0 1px 0 #ffffff35, 0 18px 50px #000b; transform: translate(-50%, -100%); animation: vision-hover-menu-in 220ms cubic-bezier(.16,1,.3,1) both; }
+.vision-hover-menu-disclosure { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 42px; padding: 4px 3px; border: 0; color: #fff; background: transparent; text-align: left; }
+.vision-hover-menu-disclosure > span:nth-child(2) { display: grid; gap: 2px; flex: 1; }
+.vision-hover-menu-disclosure small { color: #b9ffceaa; font-size: 8px; letter-spacing: .12em; }
+.vision-hover-menu-disclosure strong { font-size: 13px; font-weight: 500; }
+.vision-hover-menu-actions { display: flex; gap: 7px; }
+.vision-hover-menu-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; flex: 1; padding: 0 9px; border: 1px solid #ffffff24; border-radius: 12px; color: #fff; background: #ffffff0d; font-size: 10px; }
+.vision-hover-menu-actions button:first-child { color: #06100b; background: #b9ffce; border-color: #b9ffce; }
+@keyframes vision-hover-menu-in { from { opacity: 0; transform: translate(-50%, -92%) scale(.92); } to { opacity: 1; transform: translate(-50%, -100%) scale(1); } }
 .vision-live-hint { position: absolute; bottom: max(38px, calc(env(safe-area-inset-bottom) + 20px)); width: 100%; padding: 0 25px; text-align: center; font-size: 12px; color: #fff; text-shadow: 0 1px 8px #000; pointer-events: none; animation: vision-hint 5.5s ease both; }
 .vision-context-tools { position: absolute; display: flex; align-items: center; gap: 6px; bottom: max(25px, calc(env(safe-area-inset-bottom) + 12px)); left: 50%; transform: translateX(-50%); border: 1px solid #ffffff38; background: linear-gradient(135deg, #ffffff1c, #ffffff08); backdrop-filter: blur(28px) saturate(160%); -webkit-backdrop-filter: blur(28px) saturate(160%); border-radius: 100px; padding: 7px; white-space: nowrap; box-shadow: inset 0 1px 0 #ffffff2a, 0 14px 45px #0008; animation: vision-float 5s ease-in-out infinite; }
 @keyframes vision-float { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-5px); } }
@@ -118,6 +127,12 @@
 @keyframes vision-research-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .vision-lens-knowledge { display: grid; gap: 5px; padding: 12px; border: 1px solid #ffffff20; border-radius: 14px; font-size: 12px; line-height: 1.5; }
 .vision-lens-knowledge span { color: #ffffff90; font-size: 11px; }
+.vision-research-hero { display: grid; grid-template-columns: 92px 1fr; gap: 12px; align-items: center; padding: 8px; border: 1px solid #ffffff28; border-radius: 20px; background: linear-gradient(135deg, #ffffff18, #ffffff05); box-shadow: inset 0 1px 0 #ffffff24, 0 12px 35px #0006; }
+.vision-research-hero img { width: 92px; height: 92px; object-fit: cover; border-radius: 14px; }
+.vision-research-hero div { display: grid; gap: 5px; min-width: 0; }
+.vision-research-hero small { color: #b9ffceaa; font-size: 8px; letter-spacing: .12em; }
+.vision-research-hero strong { font-size: 13px; line-height: 1.35; }
+.vision-research-hero span { color: #ffffff70; font-size: 10px; }
 .vision-lens-result { display: grid; grid-template-columns: 54px 1fr auto; align-items: center; gap: 10px; min-height: 66px; padding: 7px; border: 1px solid #ffffff22; border-radius: 18px; background: linear-gradient(135deg, #ffffff12, #ffffff04); color: #fff; text-decoration: none; box-shadow: inset 0 1px 0 #ffffff18; transition: transform 220ms ease, background 220ms ease, border-color 220ms ease; }
 .vision-lens-result:active { transform: scale(.98); background: #ffffff18; border-color: #b9ffce55; }
 .vision-lens-result img { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; background: #ffffff10; }
