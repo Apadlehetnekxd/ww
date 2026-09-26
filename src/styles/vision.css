@@ -16,7 +16,7 @@
 @keyframes vision-entry-pulse { 0%, 100% { opacity: .25; transform: scale(.75); } 50% { opacity: .9; transform: scale(1.35); } }
 @media (prefers-reduced-motion: reduce) { .vision-entry-lidar i { animation: none; opacity: .55; } }
 
-.vision-app {
+.vision-app { --glass-border: #ffffff38; --glass-surface: linear-gradient(135deg, #ffffff1c, #ffffff08 45%, #b9ffce0b);
   position: fixed; inset: 0; width: 100%; height: 100dvh; min-height: 100svh;
   overflow: hidden; isolation: isolate; background: #000; color: #fff; z-index: 60;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -58,11 +58,12 @@
 .vision-progress-copy { color: #ffffff8c; font-size: 11px; letter-spacing: .01em; font-variant-numeric: tabular-nums; margin: 0 0 17px; }
 .vision-progress-copy span { padding: 0 5px; }
 .vision-progress { height: 2px; background: #ffffff26; overflow: hidden; width: 100%; }
-.vision-progress > span { display: block; width: 100%; height: 100%; background: #fff; transform-origin: left; transition: transform 300ms linear; }
+.vision-progress > span { display: block; width: 100%; height: 100%; background: linear-gradient(90deg, #b9ffce, #fff, #b9ffce); background-size: 200% 100%; transform-origin: left; transition: transform 300ms linear; animation: vision-progress-glow 1.8s linear infinite; }
+@keyframes vision-progress-glow { to { background-position: 200% 0; } }
 .vision-instruction { color: #ffffff8c; font-size: 11px; line-height: 1.6; margin: 19px 0 0; min-height: 18px; }
 .vision-app[data-phase='revealing'] .vision-scan-status { opacity: 0; }
 .vision-touch-surface { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; }
-.vision-object-label { position: absolute; z-index: 8; display: flex; align-items: center; min-height: 48px; min-width: 48px; padding: 9px 12px; max-width: 180px; border: 1px solid #ffffff60; border-radius: 999px; background: #050505e8; color: #fff; transform: translate(-50%, -50%); transition: left 90ms linear, top 90ms linear; text-shadow: 0 1px 7px #000; pointer-events: auto; cursor: pointer; touch-action: manipulation; }
+.vision-object-label { position: absolute; z-index: 8; display: flex; align-items: center; min-height: 48px; min-width: 48px; padding: 9px 12px; max-width: 180px; border: 1px solid #ffffff60; border-radius: 999px; background: linear-gradient(135deg, #ffffff22, #050505c9); backdrop-filter: blur(18px) saturate(150%); -webkit-backdrop-filter: blur(18px) saturate(150%); color: #fff; transform: translate(-50%, -50%); transition: left 90ms linear, top 90ms linear; text-shadow: 0 1px 7px #000; pointer-events: auto; cursor: pointer; touch-action: manipulation; }
 .vision-object-secondary { opacity: .92; }
 .vision-object-label.is-selected { border-color: #fff; background: #fff; color: #000; box-shadow: none; }
 .vision-object-label.is-selected .vision-object-name { color: #000; text-shadow: none; }
@@ -77,13 +78,14 @@
 .vision-object-line { width: 22px; height: 1px; background: #ffffffa6; margin: 0 7px 0 2px; }
 .vision-object-name { color: #fff; font-size: 12px; font-weight: 450; line-height: 1.5; text-align: left; }
 .vision-live-hint { position: absolute; bottom: max(38px, calc(env(safe-area-inset-bottom) + 20px)); width: 100%; padding: 0 25px; text-align: center; font-size: 12px; color: #fff; text-shadow: 0 1px 8px #000; pointer-events: none; animation: vision-hint 5.5s ease both; }
-.vision-context-tools { position: absolute; display: flex; align-items: center; gap: 6px; bottom: max(25px, calc(env(safe-area-inset-bottom) + 12px)); left: 50%; transform: translateX(-50%); border: 1px solid #ffffff30; background: #000b; backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-radius: 100px; padding: 6px; white-space: nowrap; }
+.vision-context-tools { position: absolute; display: flex; align-items: center; gap: 6px; bottom: max(25px, calc(env(safe-area-inset-bottom) + 12px)); left: 50%; transform: translateX(-50%); border: 1px solid #ffffff38; background: linear-gradient(135deg, #ffffff1c, #ffffff08); backdrop-filter: blur(28px) saturate(160%); -webkit-backdrop-filter: blur(28px) saturate(160%); border-radius: 100px; padding: 7px; white-space: nowrap; box-shadow: inset 0 1px 0 #ffffff2a, 0 14px 45px #0008; animation: vision-float 5s ease-in-out infinite; }
+@keyframes vision-float { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-5px); } }
 .vision-context-tools button, .vision-context-tools a { display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 44px; height: 44px; border: 0; border-radius: 50px; background: transparent; color: #fff; font-size: 12px; }
 .vision-context-tools button:first-of-type { padding: 0 16px; }
 .vision-followup { position: absolute; bottom: max(32px, calc(env(safe-area-inset-bottom) + 14px)); left: 24px; right: 24px; width: fit-content; max-width: calc(100% - 48px); margin: 0 auto; display: flex; align-items: flex-start; gap: 12px; padding: 10px 8px 10px 20px; background: #000b; border: 1px solid #ffffff20; border-radius: 22px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); font-size: 12px; line-height: 1.55; }
 .vision-followup span { max-width: 52ch; }
 .vision-followup button { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; background: transparent; border: 0; }
-.vision-sheet { position: fixed; inset: auto 0 0; box-sizing: border-box; width: min(100%, 480px); max-width: 100%; max-height: min(56dvh, 520px); margin: 0 auto; padding: 10px 25px max(25px, calc(env(safe-area-inset-bottom) + 14px)); border: 1px solid #ffffff26; border-bottom: 0; border-radius: 26px 26px 0 0; color: #fff; background: #0a0a0af5; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color-scheme: dark; overflow-y: auto; overscroll-behavior: contain; animation: vision-sheet-up 250ms ease both; }
+.vision-sheet { position: fixed; inset: auto 0 0; box-sizing: border-box; width: min(100%, 480px); max-width: 100%; max-height: min(72dvh, 650px); margin: 0 auto; padding: 10px 25px max(25px, calc(env(safe-area-inset-bottom) + 14px)); border: 1px solid #ffffff38; border-bottom: 0; border-radius: 32px 32px 0 0; color: #fff; background: linear-gradient(145deg, #ffffff18, #ffffff07 48%, #b9ffce0b); box-shadow: inset 0 1px 0 #ffffff32, 0 -20px 80px #000b; backdrop-filter: blur(34px) saturate(165%); -webkit-backdrop-filter: blur(34px) saturate(165%); font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color-scheme: dark; overflow-y: auto; overscroll-behavior: contain; animation: vision-sheet-up 250ms ease both; }
 .vision-sheet::backdrop { background: #0002; }
 .vision-sheet-handle { width: 30px; height: 3px; border-radius: 5px; margin: 0 auto 12px; background: #ffffff30; }
 .vision-sheet-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 10px; }
@@ -93,7 +95,10 @@
 .vision-sheet-actions { display: flex; gap: 8px; margin: 25px 0 18px; flex-wrap: wrap; }
 .vision-sheet-actions button, .vision-sheet-actions a { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 1px solid #ffffff25; border-radius: 40px; font-size: 11px; background: transparent; color: #fff; text-decoration: none; }
 .vision-sheet-actions button:first-child { background: #fff; color: #000; border-color: #fff; }
-.vision-answer-card { position: relative; margin: 8px 0 18px; padding: 15px 16px 17px; border: 1px solid #ffffff1f; border-radius: 20px; background: linear-gradient(145deg, #ffffff0c, #ffffff03); box-shadow: inset 0 1px 0 #ffffff12, 0 12px 35px #0006; overflow: hidden; }
+.vision-answer-card { position: relative; margin: 10px -6px 22px; padding: 24px 20px 25px; border: 1px solid var(--glass-border); border-radius: 30px; background: var(--glass-surface); box-shadow: inset 0 1px 0 #ffffff35, inset 0 -1px 0 #0006, 0 20px 70px #0009; overflow: hidden; backdrop-filter: blur(30px) saturate(170%); -webkit-backdrop-filter: blur(30px) saturate(170%); animation: vision-answer-arrive 700ms cubic-bezier(.16,1,.3,1) both; }
+.vision-answer-card::before { content: ''; position: absolute; inset: 1px; border-radius: inherit; background: linear-gradient(115deg, #ffffff18, transparent 30%, transparent 65%, #b9ffce16); opacity: .7; pointer-events: none; animation: vision-glass-shimmer 5s ease-in-out infinite; }
+@keyframes vision-answer-arrive { from { opacity: 0; transform: translateY(18px) scale(.97); filter: blur(8px); } to { opacity: 1; transform: none; filter: blur(0); } }
+@keyframes vision-glass-shimmer { 0%, 100% { transform: translateX(-8%); opacity: .4; } 50% { transform: translateX(8%); opacity: 1; } }
 .vision-answer-card::after { content: ''; position: absolute; width: 130px; height: 130px; right: -52px; top: -72px; border-radius: 50%; background: #b9ffce18; filter: blur(24px); pointer-events: none; }
 .vision-answer-kicker { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; color: #b9ffce; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 11px; }
 .vision-answer-orb { width: 7px; height: 7px; border-radius: 50%; background: #b9ffce; box-shadow: 0 0 12px #b9ffce; }
