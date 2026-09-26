@@ -35,6 +35,7 @@ function VisionPage() {
   const [hint, setHint] = useState(false);
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
+  const [identifiedLabels, setIdentifiedLabels] = useState<Record<string, string>>({});
   const [questionError, setQuestionError] = useState('');
   const [busy, setBusy] = useState(false);
   const [listening, setListening] = useState(false);
@@ -129,6 +130,10 @@ function VisionPage() {
       if (controller.signal.aborted) return;
       history.current = [...history.current, { role: 'user' as const, content: prompt }, { role: 'assistant' as const, content: result.answer }].slice(-16);
       setAnswer(result.answer);
+      if (latestObject) {
+        const firstLine = result.answer.split(/[\n.!?]/).map(line => line.replace(/^[\s*#\d.)-]+/, '').trim()).find(line => line.length >= 3 && line.length <= 46);
+        if (firstLine) setIdentifiedLabels(current => ({ ...current, [latestObject.id]: firstLine }));
+      }
       if (spoken) voice.current.speak(result.needsMoreInfo || result.answer, setSpeechError, undefined, false);
       if (result.needsMoreInfo) {
         const attempts = previous?.attempts ?? 0;
@@ -369,7 +374,7 @@ function VisionPage() {
       {phase === 'live' && <>
         <button className="vision-touch-surface" aria-label="Explore camera view" onClick={onCameraTap} />
   {target && targetVisible && <button className={`vision-object-label ${selected?.id === target.id ? 'is-selected' : ''}`} style={{ left: targetPosition.x, top: targetPosition.y }} onClick={() => { setSelected(target); setSheet('object'); }}>
-  <span className="vision-object-dot" /><span className="vision-object-depth" aria-hidden="true" /><span className="vision-object-line" /><span className="vision-object-name">{target.label && target.label !== 'Visible object' ? target.label : 'Tap to identify'}</span>
+  <span className="vision-object-dot" /><span className="vision-object-depth" aria-hidden="true" /><span className="vision-object-line" /><span className="vision-object-name">{identifiedLabels[target.id] || (busy ? 'Identifying…' : target.label && target.label !== 'Visible object' ? target.label : 'Object')}</span>
   </button>}
   {selected && selected.id !== 'pointing-target' && videoRef.current && stage.current && (() => {
     const region = selected.region;
@@ -382,7 +387,7 @@ function VisionPage() {
     if (!videoRef.current || !stage.current) return null;
     const position = frameToViewport({ x: object.region.x + object.region.width / 2, y: object.region.y + object.region.height / 2 }, videoRef.current, stage.current.getBoundingClientRect());
     if (position.x < 12 || position.x > viewport.width - 12 || position.y < 24 || position.y > viewport.height - 80) return null;
-    return <button key={object.id} className="vision-object-label vision-object-secondary" style={{ left: position.x, top: position.y }} onClick={() => { setSelected(object); setSheet('object'); }}><span className="vision-object-dot" /><span className="vision-object-line" /><span className="vision-object-name">{object.label && object.label !== 'Visible object' ? object.label : 'Tap to identify'}</span></button>;
+    return <button key={object.id} className="vision-object-label vision-object-secondary" style={{ left: position.x, top: position.y }} onClick={() => { setSelected(object); setSheet('object'); }}><span className="vision-object-dot" /><span className="vision-object-line" /><span className="vision-object-name">{identifiedLabels[object.id] || (busy ? 'Identifying…' : object.label && object.label !== 'Visible object' ? object.label : 'Object')}</span></button>;
   })}
         {hint && !tools && !sheet && !busy && !followup && <p className="vision-live-hint">Point at something. Or tap to explore.</p>}
         {tools && !sheet && <div className="vision-context-tools">
