@@ -369,7 +369,7 @@ function VisionPage() {
       {phase === 'live' && <>
         <button className="vision-touch-surface" aria-label="Explore camera view" onClick={onCameraTap} />
   {target && targetVisible && <button className={`vision-object-label ${selected?.id === target.id ? 'is-selected' : ''}`} style={{ left: targetPosition.x, top: targetPosition.y }} onClick={() => { setSelected(target); setSheet('object'); }}>
-  <span className="vision-object-dot" /><span className="vision-object-line" /><span className="vision-object-name">{target.label && target.label !== 'Visible object' ? target.label : 'Tap to identify'}</span>
+  <span className="vision-object-dot" /><span className="vision-object-depth" aria-hidden="true" /><span className="vision-object-line" /><span className="vision-object-name">{target.label && target.label !== 'Visible object' ? target.label : 'Tap to identify'}</span>
   </button>}
   {selected && selected.id !== 'pointing-target' && videoRef.current && stage.current && (() => {
     const region = selected.region;
@@ -391,12 +391,12 @@ function VisionPage() {
           {answer && <button onClick={readAloud} aria-label="Read last answer aloud"><Volume2 size={18} /></button>}
           <button onClick={() => { setTools(false); void session.start(); }} aria-label="Scan again"><Scan size={18} /></button>
         </div>}
-        {(busy || followup || speechError) && !sheet && <div className="vision-followup" role="status"><span>{speechError || (busy ? 'Looking at this view…' : followup)}</span>{!busy && (answer || followup) && <button onClick={readAloud} aria-label="Read aloud"><Volume2 size={15} /></button>}<button onClick={() => { stopQuestion(); setFollowup(''); setSpeechError(''); }} aria-label="Dismiss"><X size={15} /></button></div>}
+        {(busy || followup || speechError) && !sheet && <div className={`vision-followup ${busy ? 'is-working' : ''}`} role="status"><span>{speechError || (busy ? <><span className="vision-ai-pulse" aria-hidden="true" /> AI is working on this view…</> : followup)}</span>{!busy && (answer || followup) && <button onClick={readAloud} aria-label="Read aloud"><Volume2 size={15} /></button>}<button onClick={() => { stopQuestion(); setFollowup(''); setSpeechError(''); }} aria-label="Dismiss"><X size={15} /></button></div>}
       </>}
 
       {phase === 'live' && sheet === 'object' && selected && <VisionSheet title={selected.label} onClose={closeSheet}>
         <p className="vision-secondary">Pointed target:<br /><strong>{selected.label}</strong></p>
-        <p className="vision-fine">This marker follows the object or hand you point at. Ask Vision to identify it, describe it, or find more about it.</p>
+        <p className="vision-fine">The marker is anchored to the object you point at. Tap it to identify the item, ask the AI for details, or open research with images.</p>
         <div className="vision-object-meta"><Check size={13} /> {selected.observations} observation{selected.observations === 1 ? '' : 's'}</div>
         <div className="vision-sheet-actions">
           <button onClick={() => openAsk(selected)}><AudioLines size={16} /> Ask about this</button>
@@ -420,7 +420,7 @@ function VisionPage() {
           </div>
           {lensBusy && <p className="vision-fine"><LoaderCircle className="vision-spin" size={14} /> Searching visual matches…</p>}
           {lensError && <p className="vision-question-error" role="alert">{lensError}</p>}
-          {lens && <div className="vision-lens-results" aria-label="Google Lens results">
+          {lens && <div className="vision-lens-results" aria-label="Web research results"><div className="vision-research-heading"><span>Research</span><small>Live web matches</small></div>
             {lens.knowledge?.title && <div className="vision-lens-knowledge"><strong>{lens.knowledge.title}</strong>{lens.knowledge.description && <span>{lens.knowledge.description}</span>}{lens.knowledge.link && <a href={lens.knowledge.link} target="_blank" rel="noreferrer">Open image search</a>}</div>}
             {lens.matches.length === 0 && <p className="vision-fine">No visual matches found.</p>}
             {lens.matches.map((match) => <a className="vision-lens-result" href={match.link} target="_blank" rel="noreferrer" key={match.link}>

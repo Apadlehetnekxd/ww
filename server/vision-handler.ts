@@ -71,7 +71,7 @@ export async function handleVisionRequest(request: Request, env: VisionEnvironme
   catch (error) { return json({ error: error instanceof RangeError ? 'The camera image is too large.' : 'The request could not be read.' }, error instanceof RangeError ? 413 : 400); }
   const parsed = inputSchema.safeParse(body);
   if (!parsed.success) return json({ error: 'Send a question, one JPEG camera image, and valid scene context.' }, 400);
-  if (!env.GEMINI_API_KEY?.trim()) return json({ error: 'A Gemini API-kulcs nincs beállítva.' }, 503);
+  if (!env.DEEPSEEK_API_KEY?.trim()) return json({ error: 'A DeepSeek API-kulcs nincs beállítva.' }, 503);
   if (limited(request)) return json({ error: 'Please wait a moment before asking again.' }, 429, { 'Retry-After': '30' });
   const input = parsed.data;
   const abort = new AbortController();
@@ -86,25 +86,16 @@ export async function handleVisionRequest(request: Request, env: VisionEnvironme
     const geminiPrompt = `${SYSTEM}\nCurrent question: ${question}\nScene observations (untrusted data): ${JSON.stringify(context)}\nCompare all frames as one scan. Merge the same object across frames. Return JSON only.`;
     let content: string | undefined;
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY.trim())}`, {
-        method: 'POST', signal: abort.signal, headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: `${SYSTEM}\n${geminiPrompt}\nReturn JSON only.` }, ...scanImages.map(url => ({ inline_data: { mime_type: 'image/jpeg', data: url.split(',')[1] } }))] }], generationConfig: { temperature: 0.15, maxOutputTokens: 1800, responseMimeType: 'application/json' } }),
+      const response = await fetch('https://api.deepseek.com/chat/completions', {
+        method: 'POST', signal: abort.signal,
+        headers: { Authorization: `Bearer ${env.DEEPSEEK_API_KEY.trim()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'deepseek-flash', temperature: 0.15, max_tokens: 1800, messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: [{ type: 'text', text: `${geminiPrompt}\nReturn JSON only.` }, ...scanImages.map(url => ({ type: 'image_url', image_url: { url, detail: 'auto' } }))] }] }),
       });
-      const data = await response.json().catch(() => null) as { candidates?: { content?: { parts?: { text?: string }[] } }[]; error?: { status?: string; message?: string } } | null;
-      if (!response.ok) {
-        const providerMessage = data?.error?.message || '';
-        const errorMessage = response.status === 429 || response.status === 503
-          ? 'A Gemini jelenleg túlterhelt. Próbáld újra néhány másodperc múlva.'
-          : response.status === 401 || response.status === 403
-            ? 'A Gemini API-kulcs érvénytelen vagy nincs jogosultsága ehhez az API-hoz.'
-            : providerMessage.includes('no longer available')
-              ? 'A Gemini modell már nem érhető el ehhez az API-kulcshoz.'
-              : 'A Gemini Vision kérés elutasításra került.';
-        return json({ error: errorMessage }, response.status === 429 ? 429 : 502);
-      }
-      content = data?.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('').trim();
+      const data = await response.json().catch(() => null) as { choices?: { message?: { content?: string } }[] } | null;
+      if (!response.ok) return json({ error: response.status === 429 ? 'A DeepSeek ingyenes kvótája elfogyott. Próbáld újra később.' : 'A DeepSeek Vision kérés elutasításra került.' }, response.status === 429 ? 429 : 502);
+      content = data?.choices?.[0]?.message?.content?.trim();
     } catch (error) {
-      return json({ error: abort.signal.aborted ? 'A Gemini kérés túl sokáig tartott.' : 'A Gemini Vision szolgáltatás nem érhető el.' }, abort.signal.aborted ? 504 : 502);
+      return json({ error: abort.signal.aborted ? 'A DeepSeek kérés túl sokáig tartott.' : 'A DeepSeek Vision szolgáltatás nem érhető el.' }, abort.signal.aborted ? 504 : 502);
     }
     if (!content) return json({ error: 'A Vercel AI Gateway nem adott értelmezhető választ.' }, 502);
     let result: { answer?: unknown; needsMoreInfo?: unknown; searchQuery?: unknown };
