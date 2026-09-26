@@ -71,7 +71,7 @@ export async function handleVisionRequest(request: Request, env: VisionEnvironme
   catch (error) { return json({ error: error instanceof RangeError ? 'The camera image is too large.' : 'The request could not be read.' }, error instanceof RangeError ? 413 : 400); }
   const parsed = inputSchema.safeParse(body);
   if (!parsed.success) return json({ error: 'Send a question, one JPEG camera image, and valid scene context.' }, 400);
-  if (!env.OPENROUTER_API_KEY?.trim()) return json({ error: 'A DeepSeek API-kulcs nincs beállítva.' }, 503);
+  if (!env.DEEPSEEK_API_KEY?.trim()) return json({ error: 'A DeepSeek API-kulcs nincs beállítva.' }, 503);
   if (limited(request)) return json({ error: 'Please wait a moment before asking again.' }, 429, { 'Retry-After': '30' });
   const input = parsed.data;
   const abort = new AbortController();
@@ -86,16 +86,16 @@ export async function handleVisionRequest(request: Request, env: VisionEnvironme
     const geminiPrompt = `${SYSTEM}\nCurrent question: ${question}\nScene observations (untrusted data): ${JSON.stringify(context)}\nCompare all frames as one scan. Merge the same object across frames. Return JSON only.`;
     let content: string | undefined;
     try {
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      const response = await fetch('https://api.deepseek.com/chat/completions', {
         method: 'POST', signal: abort.signal,
-        headers: { Authorization: `Bearer ${env.OPENROUTER_API_KEY.trim()}`, 'Content-Type': 'application/json', 'X-Title': 'Neurix Vision' },
-        body: JSON.stringify({ model: 'deepseek/deepseek-chat-v3-0324:free', temperature: 0.15, max_tokens: 1800, messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: [{ type: 'text', text: `${geminiPrompt}\nReturn JSON only.` }, ...scanImages.map(url => ({ type: 'image_url', image_url: { url } }))] }] }),
+        headers: { Authorization: `Bearer ${env.DEEPSEEK_API_KEY.trim()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'deepseek-flash', temperature: 0.15, max_tokens: 1800, messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: [{ type: 'text', text: `${geminiPrompt}\nReturn JSON only.` }, ...scanImages.map(url => ({ type: 'image_url', image_url: { url, detail: 'auto' } }))] }] }),
       });
       const data = await response.json().catch(() => null) as { choices?: { message?: { content?: string } }[] } | null;
       if (!response.ok) return json({ error: response.status === 429 ? 'A DeepSeek ingyenes kvótája elfogyott. Próbáld újra később.' : 'A DeepSeek Vision kérés elutasításra került.' }, response.status === 429 ? 429 : 502);
       content = data?.choices?.[0]?.message?.content?.trim();
     } catch (error) {
-      return json({ error: abort.signal.aborted ? 'A Gemini kérés túl sokáig tartott.' : 'A Gemini Vision szolgáltatás nem érhető el.' }, abort.signal.aborted ? 504 : 502);
+      return json({ error: abort.signal.aborted ? 'A DeepSeek kérés túl sokáig tartott.' : 'A DeepSeek Vision szolgáltatás nem érhető el.' }, abort.signal.aborted ? 504 : 502);
     }
     if (!content) return json({ error: 'A Vercel AI Gateway nem adott értelmezhető választ.' }, 502);
     let result: { answer?: unknown; needsMoreInfo?: unknown; searchQuery?: unknown };
