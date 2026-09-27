@@ -17,14 +17,14 @@
 @media (prefers-reduced-motion: reduce) { .vision-entry-lidar i { animation: none; opacity: .55; } }
 
 .vision-app { --glass-border: #ffffff2c; --glass-surface: linear-gradient(145deg, #ffffff16, #ffffff06 46%, #b9ffce08);
-  position: fixed; inset: 0; width: 100%; height: 100dvh; min-height: 100svh;
+  position: fixed; inset: 0; width: 100vw; height: 100dvh; min-height: 100svh; min-width: 100%;
   overflow: hidden; isolation: isolate; background: #000; color: #fff; z-index: 60;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-tap-highlight-color: transparent; color-scheme: dark;
 }
 .vision-app button, .vision-sheet button, .vision-sheet a { cursor: pointer; }
 .vision-app button:focus-visible, .vision-app a:focus-visible, .vision-sheet :focus-visible { outline: 1px solid #fff; outline-offset: 5px; }
-.vision-video, .vision-points { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center; pointer-events: none; transform: translateZ(0); backface-visibility: hidden; }
+.vision-video, .vision-points { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; pointer-events: none; transform: translateZ(0); backface-visibility: hidden; }
 .vision-video { will-change: transform, filter; }
 .vision-points { will-change: opacity; }
 .vision-video { opacity: 0; transform: none; transition: opacity 400ms cubic-bezier(.4, 0, .2, 1); filter: saturate(1.08) contrast(1.06) brightness(1.06); }
