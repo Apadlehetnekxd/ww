@@ -55,6 +55,15 @@ const renderMessages = [
 ];
 const renderStepCount = 10;
 
+const showcaseCards = [
+  { title: 'Photo Edit', image: '/image-showcase/photo-edit.png', tone: 'dark' },
+  { title: 'Reimagine', image: '/image-showcase/reimagine.png', tone: 'dark' },
+  { title: 'Smart Resize', image: '/image-showcase/smart-resize.png', tone: 'light' },
+  { title: 'BG Removal & Change', image: '/image-showcase/background-change.png', tone: 'light' },
+  { title: 'Product Design', image: '/image-showcase/product-design.png', tone: 'light' },
+  { title: 'Collage', image: '/image-showcase/collage.png', tone: 'warm' },
+] as const;
+
 function ImagePage() {
   const search = useSearch({ from: "/image" });
   const navigate = useNavigate();
@@ -233,26 +242,20 @@ function ImagePage() {
         <div className="flex-1">
           <div className="max-w-4xl mx-auto w-full px-5 sm:px-6 lg:px-10 py-6 sm:py-8 pb-44 sm:pb-40">
             {images.length === 0 && !isGenerating ? (
-              <div className="image-generator__empty min-h-[62vh] flex items-start justify-center pt-[12vh] text-center">
-                <Reveal variant="up">
-                  <div className="max-w-4xl">
-                    <h1 className="tf-display whitespace-nowrap text-[clamp(3.25rem,8vw,7.5rem)] leading-[0.92] tracking-[-0.03em]">
-                      <span className="whitespace-nowrap">Create an </span>
-                      <span
-                        className="font-serif italic font-normal align-baseline tf-flip-slot"
-                        style={{ minWidth: 0 }}
-                      >
-                        <span key={wordIndex} className="tf-flip-word tf-flip-word--current is-entering">
-                          {rotatingWords[wordIndex]}
-                        </span>
-                      </span>
-                      <span className="text-highlight inline-block relative -ml-[0.08em] translate-y-[0.08em]">.</span>
-                    </h1>
-                    <p className="mt-6 text-base sm:text-lg text-ink-soft">
-                      Describe what you want to see and Neurix will render it here.
-                    </p>
-                  </div>
-                </Reveal>
+              <div className="image-generator__showcase" aria-label="AI image tools">
+                <div className="image-showcase__intro">
+                  <p className="tf-eyebrow !tracking-[0.18em]">AI IMAGE STUDIO</p>
+                  <h1 className="image-showcase__title">Imagine <em>anything.</em></h1>
+                  <p>Start with an idea, a mood, or one of the ready-made AI canvases below.</p>
+                </div>
+                <div className="image-showcase__grid">
+                  {showcaseCards.map((card, index) => (
+                    <button type="button" key={card.title} className={`image-showcase__card image-showcase__card--${card.tone}`} style={{ animationDelay: `${index * 70}ms` }} onClick={() => setPrompt(card.title === 'Photo Edit' ? 'A cinematic portrait with natural light' : card.title === 'Reimagine' ? 'Reimagine this as a surreal editorial scene' : `Create a premium ${card.title.toLowerCase()} concept`)}>
+                      <img src={card.image} alt="" />
+                      <span>{card.title}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             ) : (
               <>

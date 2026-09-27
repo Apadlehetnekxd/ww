@@ -741,6 +741,39 @@
 .tf-bubble-ai {
   animation: tf-bubble-in-left 0.46s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+@media (max-width: 640px) {
+  .tf-chat-page .tf-bubble-ai {
+    position: relative;
+    padding: 18px 16px 20px;
+    border: 1px solid color-mix(in oklab, var(--foreground) 12%, transparent);
+    border-radius: 24px;
+    background: linear-gradient(145deg, color-mix(in oklab, var(--foreground) 7%, transparent), transparent 55%);
+    box-shadow: inset 0 1px 0 color-mix(in oklab, var(--foreground) 14%, transparent), 0 16px 40px color-mix(in oklab, var(--foreground) 8%, transparent);
+    backdrop-filter: blur(22px) saturate(135%);
+    -webkit-backdrop-filter: blur(22px) saturate(135%);
+  }
+  .tf-chat-page .tf-bubble-ai::before {
+    content: "AI RESPONSE";
+    display: block;
+    margin-bottom: 12px;
+    color: color-mix(in oklab, var(--foreground) 52%, transparent);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+  }
+  .tf-chat-page .tf-bubble-ai::after {
+    content: "";
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--highlight);
+    box-shadow: 0 0 14px var(--highlight);
+    animation: tf-live-pulse 1.8s ease-in-out infinite;
+  }
+}
 
 /* Assistant label + dot fade/slide in slightly before the bubble */
 @keyframes tf-fade-slide {
@@ -1403,14 +1436,38 @@ body:has(.tf-chat-page) .tf-menu-blob {
 .image-generator__empty h1 {
   text-shadow: 0 0 36px color-mix(in oklab, var(--foreground) 8%, transparent);
 }
-
+.image-generator__showcase { width: min(1180px, 100%); margin: 0 auto; padding: clamp(2.5rem, 7vw, 6rem) 0 7rem; }
+.image-showcase__intro { max-width: 620px; margin: 0 auto clamp(2rem, 5vw, 4rem); text-align: center; animation: nx-image-rise .8s var(--image-motion-ease) both; }
+.image-showcase__intro p:last-child { margin: 1rem auto 0; max-width: 420px; color: color-mix(in oklab, var(--foreground) 55%, transparent); font-size: clamp(.92rem, 1.4vw, 1.08rem); line-height: 1.55; }
+.image-showcase__title { margin-top: .75rem; font-size: clamp(3.2rem, 9vw, 7.5rem); line-height: .9; letter-spacing: -.07em; font-weight: 500; }
+.image-showcase__title em { font-family: Georgia, serif; font-weight: 400; }
+.image-showcase__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+.image-showcase__card { position: relative; min-height: clamp(220px, 31vw, 410px); overflow: hidden; border: 0; border-radius: 24px; isolation: isolate; cursor: pointer; text-align: left; animation: nx-image-rise .7s var(--image-motion-ease) both; }
+.image-showcase__card::after { content: ''; position: absolute; inset: 44% 0 0; z-index: 1; background: linear-gradient(transparent, #000b); pointer-events: none; }
+.image-showcase__card img { width: 100%; height: 100%; position: absolute; inset: 0; object-fit: cover; transition: transform .9s var(--image-motion-ease), filter .5s ease; }
+.image-showcase__card:hover img { transform: scale(1.055); filter: saturate(1.1) contrast(1.04); }
+.image-showcase__card span { position: absolute; z-index: 2; left: 20px; bottom: 18px; color: #fff; font-size: clamp(1.05rem, 2.4vw, 1.8rem); font-weight: 500; letter-spacing: -.035em; }
+.image-showcase__card:focus-visible { outline: 2px solid var(--highlight); outline-offset: 3px; }
+@media (min-width: 850px) { .image-showcase__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; } .image-showcase__card { min-height: 330px; border-radius: 28px; } .image-generator__showcase { padding-top: 4rem; } }
+@media (max-width: 560px) { .image-generator__showcase { padding-top: 2.2rem; } .image-showcase__grid { gap: 3px; margin-inline: -5px; } .image-showcase__card { min-height: 230px; border-radius: 18px; } .image-showcase__card span { left: 14px; bottom: 14px; font-size: 1.05rem; } }
 .image-generator__dock {
+
   animation: nx-image-dock-in 0.7s var(--image-motion-ease) both;
 }
 
 .image-generator__composer {
   will-change: transform, box-shadow;
+  min-height: 64px;
+  padding: 8px 10px 8px 16px;
+  border-color: color-mix(in oklab, var(--foreground) 22%, transparent);
+  background: color-mix(in oklab, var(--foreground) 10%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--foreground) 22%, transparent), 0 18px 60px color-mix(in oklab, var(--foreground) 18%, transparent);
+  backdrop-filter: blur(28px) saturate(145%);
+  -webkit-backdrop-filter: blur(28px) saturate(145%);
 }
+.image-generator__composer textarea::placeholder { color: color-mix(in oklab, var(--foreground) 58%, transparent); }
+@media (min-width: 850px) { .image-generator__composer { max-width: 720px; margin-inline: auto; min-height: 72px; border-radius: 28px; } }
+
 
 .image-generator__composer:focus-within svg {
   color: var(--highlight);
