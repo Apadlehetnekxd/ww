@@ -241,6 +241,7 @@ function VisionPage() {
   const measuredTargetPosition = target && videoRef.current && stage.current
     ? frameToViewport({ x: target.region.x + target.region.width / 2, y: target.region.y + target.region.height / 2 }, videoRef.current, stage.current.getBoundingClientRect()) : null;
   const targetPosition = measuredTargetPosition || (phase === 'live' ? { x: viewport.width * .5, y: viewport.height * .52 } : null);
+  const capsuleTarget = target || { id: 'pointing-target', label: 'Point at an object', region: { x: .41, y: .43, width: .18, height: .18 } } as VisionObject;
   const targetVisible = Boolean(targetPosition);
   const targetPlacement = targetPosition ? {
     x: Math.max(76, Math.min(viewport.width - 76, targetPosition.x)),
@@ -395,10 +396,10 @@ function VisionPage() {
 
       {phase === 'live' && <>
         <button className="vision-touch-surface" aria-label="Explore camera view" onClick={onCameraTap} />
-  {target && targetVisible && <button className={`vision-object-label ${selected?.id === target.id ? 'is-selected' : ''}`} style={{ left: targetPlacement?.x, top: targetPlacement?.y }} onPointerEnter={() => showHoverMenu(target)} onPointerDown={() => showHoverMenu(target)} onPointerLeave={hideHoverMenu} onFocus={() => showHoverMenu(target)} onBlur={hideHoverMenu} onClick={(event) => { event.preventDefault(); showHoverMenu(target); }}>
-  <span className="vision-object-dot" /><span className="vision-object-depth" aria-hidden="true" /><span className="vision-object-line" /><span className="vision-object-name">{identifiedLabels[target.id] || (busy ? 'Identifying…' : target.label && target.label !== 'Visible object' && target.label !== 'Tap to identify' ? target.label : 'Point at an object')}</span>
+  {targetVisible && <button className={`vision-object-label ${selected?.id === capsuleTarget.id ? 'is-selected' : ''}`} style={{ left: targetPlacement?.x, top: targetPlacement?.y }} onPointerEnter={() => showHoverMenu(capsuleTarget)} onPointerDown={() => showHoverMenu(capsuleTarget)} onFocus={() => showHoverMenu(capsuleTarget)} onBlur={hideHoverMenu} onClick={(event) => { event.preventDefault(); setHoverTarget(current => current?.id === capsuleTarget.id ? null : capsuleTarget); }}>
+  <span className="vision-object-dot" /><span className="vision-object-depth" aria-hidden="true" /><span className="vision-object-line" /><span className="vision-object-name">{identifiedLabels[capsuleTarget.id] || (busy ? 'Identifying…' : capsuleTarget.label && capsuleTarget.label !== 'Visible object' && capsuleTarget.label !== 'Tap to identify' ? capsuleTarget.label : 'Point at an object')}</span>
   </button>}
-  {hoverTarget && hoverTarget.id === target?.id && <div className="vision-hover-menu" style={{ left: targetPlacement?.x, top: Math.max(78, (targetPlacement?.y || 160) - 82) }} onPointerEnter={() => showHoverMenu(hoverTarget)} onPointerLeave={hideHoverMenu} role="dialog" aria-label={`Actions for ${identifiedLabels[hoverTarget.id] || hoverTarget.label || 'object'}`}>
+  {hoverTarget && <div className="vision-hover-menu" style={{ left: targetPlacement?.x, top: Math.max(78, (targetPlacement?.y || 160) - 82) }} onPointerEnter={() => showHoverMenu(hoverTarget)} role="dialog" aria-label={`Actions for ${identifiedLabels[hoverTarget.id] || hoverTarget.label || 'object'}`}>
     <button className="vision-hover-menu-disclosure" onClick={() => { setSelected(hoverTarget); setSheet('object'); }}><span className="vision-ai-pulse" aria-hidden="true" /><span><small>OBJECT DETECTED</small><strong>{identifiedLabels[hoverTarget.id] || hoverTarget.label || 'Object'}</strong></span><ChevronUp size={16} /></button>
   </div>}
   {selected && selected.id !== 'pointing-target' && videoRef.current && stage.current && (() => {
