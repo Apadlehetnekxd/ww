@@ -156,7 +156,7 @@ export class ScanEngine {
         this.renderedPoints[offset] += (this.points[offset] - this.renderedPoints[offset]) * movementEase;
         this.renderedPoints[offset + 1] += (this.points[offset + 1] - this.renderedPoints[offset + 1]) * movementEase;
         this.renderedPoints[offset + 2] += (this.points[offset + 2] - this.renderedPoints[offset + 2]) * appearanceEase;
-        this.renderedPoints[offset + 3] = this.points[offset + 3];
+        this.renderedPoints[offset + 3] += (this.points[offset + 3] - this.renderedPoints[offset + 3]) * appearanceEase;
       }
       this.renderer?.render(this.renderedPoints);
       const lived = this.began ? Math.max(0, now - this.began) : 0;
