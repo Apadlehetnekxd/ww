@@ -61,6 +61,7 @@ function VisionPage() {
   const questionDraft = useRef(question);
   const scanAnalyzed = useRef(false);
   const inspectedPointingId = useRef<string | null>(null);
+  const researchedObjectId = useRef<string | null>(null);
 
   useEffect(() => {
     const userAgent = navigator.userAgent.toLowerCase();
@@ -164,7 +165,13 @@ function VisionPage() {
     } finally {
       if (request.current === controller) { request.current = null; setBusy(false); }
     }
-  }, [allowFollowup, scanImages, session.requestAnalysis, spoken, videoRef]);
+  }, [allowFollowup, identifiedLabels, scanImages, session.requestAnalysis, spoken, videoRef]);
+
+  useEffect(() => {
+    if (phase !== 'live' || busy || !answer || !selected || researchedObjectId.current === selected.id) return;
+    researchedObjectId.current = selected.id;
+    void searchCurrentView(selected);
+  }, [answer, busy, phase, selected]);
 
   useEffect(() => {
     if (phase !== 'live' || scanAnalyzed.current || scanImages.current.length < 2) return;
@@ -239,13 +246,14 @@ function VisionPage() {
   const localHttp = !window.isSecureContext && location.port === '3000';
   const secureCameraUrl = `https://${location.hostname}:3443/vision`;
 
-  const searchCurrentView = async () => {
+  const searchCurrentView = async (objectOverride: VisionObject | null = selected) => {
     const video = videoRef.current;
     if (!video || lensBusy) return;
     setLensBusy(true); setLensError(''); setLens(null);
     try {
-      const label = selected?.label || frame.objects[0]?.label;
-      setLens(await searchWithLens(snapshotFrame(video, selected?.region), label));
+      const object = objectOverride || selected;
+      const label = identifiedLabels[object?.id || ''] || object?.label || frame.objects[0]?.label;
+      setLens(await searchWithLens(snapshotFrame(video, object?.region), label));
     } catch (error) { setLensError(error instanceof Error ? error.message : 'Visual search is temporarily unavailable.'); }
     finally { setLensBusy(false); }
   };
@@ -412,7 +420,7 @@ function VisionPage() {
       </>}
 
       {phase === 'live' && sheet === 'object' && selected && <VisionSheet title={identifiedLabels[selected.id] || selected.label || 'Object'} onClose={closeSheet}>
-        {answer && <div className="vision-answer-card vision-object-answer" role="status"><div className="vision-answer-kicker"><span className="vision-answer-orb" /> AI INSIGHT</div><p className="vision-answer">{answer}</p></div>}
+        {answer && <div className="vision-answer-card vision-object-answer" role="status"><div className="vision-answer-kicker"><span className="vision-answer-orb" /> AI INSIGHT <small>LIVE ANALYSIS</small></div><div className="vision-ai-activity"><span>Vision identified the object</span><span>Searching visual matches</span><span>Finding useful facts</span></div><p className="vision-answer">{answer}</p></div>}
         <p className="vision-secondary">{identifiedLabels[selected.id] || selected.label || 'Object'}</p>
         <p className="vision-fine">The AI identifies the object, shares a few useful facts, and finds a similar image from the web.</p>
         <div className="vision-object-meta"><Check size={13} /> {selected.observations} observation{selected.observations === 1 ? '' : 's'}</div>
