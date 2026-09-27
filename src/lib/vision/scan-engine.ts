@@ -102,14 +102,8 @@ export class ScanEngine {
   }
 
   private accept(observation: ScanObservation, processingMs: number) {
-    // Ignore frames captured during a sudden phone movement. Keeping the last
-    // trusted cloud prevents the overlay from jumping or tearing across the view.
-    const motionSpike = this.rotationRate > 2.8 || this.acceleration > 18;
-    if (motionSpike) {
-      this.pending = false;
-      this.metrics = { ...this.metrics, instruction: 'Hold steady for a moment…' };
-      return;
-    }
+    // Keep the last trusted cloud during a motion spike, but never discard the
+    // observation pipeline. This prevents stalls while the render loop remains smooth.
     const bounds = this.canvas.getBoundingClientRect();
     const scale = Math.min(bounds.width / this.video.videoWidth, bounds.height / this.video.videoHeight);
     const width = this.video.videoWidth * scale / bounds.width;
@@ -156,8 +150,8 @@ export class ScanEngine {
     // independently and adapts to the device rather than throttling animation.
     {
       this.lastRender = now;
-      const movementEase = 1 - Math.exp(-elapsed / 170);
-      const appearanceEase = 1 - Math.exp(-elapsed / 300);
+      const movementEase = 1 - Math.exp(-elapsed / 240);
+      const appearanceEase = 1 - Math.exp(-elapsed / 380);
       for (let offset = 0; offset < this.points.length; offset += 4) {
         this.renderedPoints[offset] += (this.points[offset] - this.renderedPoints[offset]) * movementEase;
         this.renderedPoints[offset + 1] += (this.points[offset + 1] - this.renderedPoints[offset + 1]) * movementEase;
