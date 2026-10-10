@@ -36,9 +36,9 @@ function VisionPage() {
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [identifiedLabels, setIdentifiedLabels] = useState<Record<string, string>>({});
-  const [hoverTarget, setHoverTarget] = useState<SceneObject | null>(null);
+  const [hoverTarget, setHoverTarget] = useState<VisionObject | null>(null);
   const hoverCloseTimer = useRef<number | null>(null);
-  const showHoverMenu = (object: SceneObject) => {
+  const showHoverMenu = (object: VisionObject) => {
     if (hoverCloseTimer.current !== null) window.clearTimeout(hoverCloseTimer.current);
     setHoverTarget(object);
   };
@@ -353,7 +353,7 @@ function VisionPage() {
     return <main className="vision-app vision-entry-screen"><div className="vision-entry-lidar" aria-hidden="true">{Array.from({ length: 20 }, (_, index) => <i key={index} />)}</div><section className="vision-entry"><p className="vision-kicker">INITIALIZING VISION</p><h1>Reading the room.</h1></section></main>;
   }
 
-  if (phase === 'permission') {
+  if ((phase as string) === 'permission') {
     return <main className="vision-app vision-entry-screen"><video ref={videoRef} className="vision-entry-media" autoPlay playsInline muted aria-hidden="true" /><canvas ref={canvasRef} className="vision-entry-media" aria-hidden="true" /><div className="vision-entry-lidar" aria-hidden="true">{Array.from({ length: 20 }, (_, index) => <i key={index} />)}</div><section className="vision-entry vision-entry-mobile" aria-labelledby="vision-meet-title"><div className="vision-access-badges"><span>NEURIX VISION</span><span>FREE TO EXPLORE</span></div><p className="vision-kicker">MEET VISION</p><h1 id="vision-meet-title">See beyond<br /><em>the obvious.</em></h1><p className="vision-secondary">Point your camera at the world. Vision turns what you see into something you can understand.</p>{localHttp ? <a className="vision-primary" href={secureCameraUrl}>Activate Vision <ArrowUpRight size={17} /></a> : <button type="button" className="vision-primary" onClick={() => void session.start()}>Activate Vision <ArrowUpRight size={17} /></button>}<p className="vision-fine">Camera access stays on this device. Your exploration starts when you choose it.</p><Link to="/" className="vision-back"><ArrowLeft size={12} /> Back to Neurix</Link></section></main>;
   }
 
@@ -365,7 +365,7 @@ function VisionPage() {
 
       {['permission', 'requesting', 'error', 'paused'].includes(phase) && (
         <section className="vision-entry" aria-live="polite">
-          {phase === 'permission' && <>
+          {(phase as string) === 'permission' && <>
             <div className="vision-access-badges" aria-label="Vision access status">
               <span>PRIVATE BETA</span>
               <span>MEMBER ONLY</span>
