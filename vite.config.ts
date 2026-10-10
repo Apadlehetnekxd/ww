@@ -8,9 +8,10 @@ import { readFileSync, existsSync } from 'node:fs';
 import { handleVisionRequest, type VisionEnvironment } from './server/vision-handler';
 import { handleTtsRequest } from './server/tts-handler';
 import { handleLensRequest, lensEnvironment } from './server/lens-handler';
+import { handleWebSearchRequest, webSearchEnvironment } from './server/web-search-handler';
 import { visionEnvironment } from './server/vision-env';
 
-function localApi(path: string, handle: (request: Request, env: VisionEnvironment) => Promise<Response>, env: VisionEnvironment): Plugin {
+function localApi<TEnv>(path: string, handle: (request: Request, env: TEnv) => Promise<Response>, env: TEnv): Plugin {
   return {
     name: `neurix${path.replace(/\W+/g, '-')}`,
     configureServer(server) {
@@ -54,6 +55,7 @@ export default defineConfig(({ mode }) => {
       localApi('/api/vision', handleVisionRequest, visionEnvironment(env)),
       localApi('/api/tts', handleTtsRequest, visionEnvironment(env)),
       localApi('/api/lens', handleLensRequest, lensEnvironment(env)),
+      localApi('/api/search', handleWebSearchRequest, webSearchEnvironment(env)),
     ],
     server: {
       host: '0.0.0.0', port: phone ? 3443 : 3000, strictPort: true,

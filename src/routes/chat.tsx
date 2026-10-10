@@ -652,7 +652,7 @@ function ChatPage() {
       
       await streamChat(
         [...messages, userMsg].map((m) => ({ role: m.role, content: m.content })),
-        false,
+        true,
         (chunk) => {
           full += chunk;
           setMessages((prev) =>

@@ -54,67 +54,17 @@ function needsWebSearch(query: string): boolean {
 }
 
 async function performWebSearch(query: string): Promise<string> {
-  const results: string[] = [];
-  const isNews = isNewsQuery(query);
-
-  if (isNews) {
-    for (const [label, url] of [
-      ["NPR News", "https://feeds.npr.org/1001/rss.xml"],
-      ["BBC World News", "https://feeds.bbci.co.uk/news/world/rss.xml"],
-    ] as const) {
-      try {
-        const r = await fetch(url, { signal: AbortSignal.timeout(5000) });
-        if (!r.ok) continue;
-        const xml = await r.text();
-        const items: string[] = [];
-        const matches = xml.match(/<item>[\s\S]*?<\/item>/g) || [];
-        for (const item of matches.slice(0, 6)) {
-          const tm = item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>|<title>(.*?)<\/title>/);
-          const dm = item.match(/<pubDate>(.*?)<\/pubDate>/);
-          const title = (tm?.[1] || tm?.[2] || "").replace(/<!\[CDATA\[|\]\]>/g, "");
-          const date = dm?.[1] ? new Date(dm[1]).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
-          if (title && title.length > 5) items.push(`- **${title}** ${date ? `(${date})` : ""}`);
-        }
-        if (items.length) results.push(`**${label}:**\n${items.join("\n")}`);
-      } catch { /* ignore */ }
-    }
-  }
-
   try {
-    const r = await fetch(
-      `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`,
-      { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(5000) }
-    );
-    const d = await r.json();
-    if (d.Abstract) results.push(`**Summary:** ${d.Abstract}`);
-    if (d.Answer) results.push(`**Quick Answer:** ${d.Answer}`);
-    if (Array.isArray(d.RelatedTopics)) {
-      const topics = d.RelatedTopics
-        .slice(0, 5)
-        .filter((t: { Text?: string }) => t.Text)
-        .map((t: { Text: string }) => `- ${t.Text}`);
-      if (topics.length) results.push(`**Related Information:**\n${topics.join("\n")}`);
-    }
-  } catch { /* ignore */ }
-
-  if (!isNews) {
-    try {
-      const r = await fetch(
-        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query.replace(/ /g, "_"))}`,
-        { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(5000) }
-      );
-      if (r.ok) {
-        const d = await r.json();
-        if (d.extract) results.push(`**Wikipedia:** ${d.extract}`);
-      }
-    } catch { /* ignore */ }
+    const response = await fetch('/api/search', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query }), signal: AbortSignal.timeout(12_000),
+    });
+    const payload = await response.json() as { results?: Array<{ title: string; link: string; snippet?: string; source?: string }>; error?: string };
+    if (!response.ok || !payload.results?.length) return '';
+    return `[LIVE WEB SOURCES FOR: ${query}]\n${payload.results.map((result, index) => `${index + 1}. [${result.title}](${result.link}) — ${result.source || 'Web'}\n${result.snippet || ''}`).join('\n')}\n[END LIVE WEB SOURCES]\nUse these current sources and cite the relevant claims as clickable markdown links in the answer.`;
+  } catch {
+    return '';
   }
-
-  if (!results.length) return "";
-  const date = new Date().toLocaleDateString("en-US", {
-    weekday: "long", year: "numeric", month: "long", day: "numeric",
-  });
-  return `[Web Search Results for "${query}" - Retrieved on ${date}]\n\n${results.join("\n\n")}\n\n---\nBased on the above search results, provide an accurate, current, and helpful response. Today's date is ${date}.\n`;
 }
 
 // ============================================================================
@@ -271,6 +221,7 @@ IMPORTANT RESPONSE GUIDELINES:
 - If greeted, respond warmly and ask how you can help.
 - For news or current events, present information as a flowing narrative with bullet points, NOT tables.
 - Keep your tone helpful, engaging, and approachable.
+- When live web sources are provided, cite the relevant claims with the supplied markdown links. Never invent links or hide the sources.
 ${mode === "fast" ? "- Speed mode: answer directly and concisely so the response arrives as quickly as possible. Avoid unnecessary reasoning or repetition.\n" : ""}
 ${mode === "ultra" ? "- Ultra mode: provide exactly one deeply considered final answer. Think through assumptions, check important details, and give a calm, complete response. Do not provide multiple drafts, second opinions, or mention internal model instructions.\n" : ""}
 \nFILE OUTPUT:
