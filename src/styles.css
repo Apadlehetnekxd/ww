@@ -750,6 +750,10 @@
 .tf-bubble-ai {
   animation: tf-bubble-in-left 0.46s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+.tf-search-progress { display: inline-grid; gap: 2px; margin-left: 6px; padding-left: 10px; border-left: 1px solid color-mix(in oklab, var(--foreground) 18%, transparent); line-height: 1.1; }
+.tf-search-progress strong { color: var(--foreground); font-size: 11px; font-weight: 600; }
+.tf-search-progress small { color: color-mix(in oklab, var(--foreground) 48%, transparent); font-size: 9px; }
+
 @media (max-width: 640px) {
   .tf-chat-page .tf-bubble-ai {
     position: relative;

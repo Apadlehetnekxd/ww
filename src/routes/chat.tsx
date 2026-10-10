@@ -402,6 +402,7 @@ function ChatPage() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [webSearchProgress, setWebSearchProgress] = useState<{ status: 'started' | 'complete'; query: string; count: number; sources: string[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string>(() => createId());
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
@@ -688,6 +689,7 @@ function ChatPage() {
         modelMode,
         {
           ultraCompare: shouldCompareUltra,
+          onWebSearchProgress: setWebSearchProgress,
           onUltraComparison: (comparison) => {
             setMessages((prev) =>
               prev.map((m) =>
@@ -832,11 +834,12 @@ function ChatPage() {
                     ) : !m.content && isLoading ? (
                       <div role="status" className="tf-bubble-ai py-2 flex items-center gap-2.5 text-foreground">
                         <span className="flex items-center gap-1">
-                          <span className="tf-think-dot" />
-                          <span className="tf-think-dot" />
-                          <span className="tf-think-dot" />
-                        </span>
-                        <span className="text-[14px] text-ink-soft">Thinking…</span>
+  <span className="tf-think-dot" />
+  <span className="tf-think-dot" />
+  <span className="tf-think-dot" />
+  </span>
+  <span className="text-[14px] text-ink-soft">{webSearchProgress?.status === 'started' ? 'Searching the web…' : webSearchProgress?.status === 'complete' ? `Found ${webSearchProgress.count} pages` : 'Thinking…'}</span>
+  {webSearchProgress && <span className="tf-search-progress"><strong>{webSearchProgress.status === 'started' ? 'Google search' : `${webSearchProgress.count} sources found`}</strong><small>{webSearchProgress.status === 'started' ? 'Looking across live sources' : webSearchProgress.sources.slice(0, 3).join(' · ')}</small></span>}
                       </div>
                     ) : (
                       <div className="tf-bubble-ai w-full min-w-0 py-1">

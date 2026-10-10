@@ -53,14 +53,20 @@ function needsWebSearch(query: string): boolean {
   return triggers.some((t) => q.includes(t));
 }
 
-async function performWebSearch(query: string): Promise<string> {
+async function performWebSearch(query: string, onProgress?: StreamChatOptions['onWebSearchProgress']): Promise<string> {
+  onProgress?.({ status: 'started', query, count: 0, sources: [] });
   try {
     const response = await fetch('/api/search', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query }), signal: AbortSignal.timeout(12_000),
     });
     const payload = await response.json() as { results?: Array<{ title: string; link: string; snippet?: string; source?: string }>; error?: string };
-    if (!response.ok || !payload.results?.length) return '';
+    if (!response.ok || !payload.results?.length) {
+      onProgress?.({ status: 'complete', query, count: 0, sources: [] });
+      return '';
+    }
+    const sources = payload.results.map((result) => result.source || (result.link ? new URL(result.link).hostname : 'Web'));
+    onProgress?.({ status: 'complete', query, count: payload.results.length, sources });
     return `[LIVE WEB SOURCES FOR: ${query}]\n${payload.results.map((result, index) => `${index + 1}. [${result.title}](${result.link}) — ${result.source || 'Web'}\n${result.snippet || ''}`).join('\n')}\n[END LIVE WEB SOURCES]\nUse these current sources and cite the relevant claims as clickable markdown links in the answer.`;
   } catch {
     return '';
@@ -76,6 +82,7 @@ export type UltraComparison = { quality: string; speed: string };
 export type StreamChatOptions = {
   ultraCompare?: boolean;
   onUltraComparison?: (comparison: UltraComparison) => void;
+  onWebSearchProgress?: (progress: { status: 'started' | 'complete'; query: string; count: number; sources: string[] }) => void;
 };
 
 async function collectOpenRouterAnswer(
@@ -206,7 +213,7 @@ export async function streamChat(
     // Skip web search when images are attached — the model should focus on the image.
     if (lastUser && imageFiles.length === 0) {
       const shouldSearch = webSearch || needsWebSearch(lastUser.content);
-      if (shouldSearch) searchContext = await performWebSearch(lastUser.content);
+      if (shouldSearch) searchContext = await performWebSearch(lastUser.content, options.onWebSearchProgress);
     }
 
     const systemMessage = `You are Neurix, a friendly and helpful AI assistant.
