@@ -36,6 +36,7 @@ import {
   type UltraComparison,
   ULTRA_COOLDOWN_MS,
   ULTRA_MESSAGES_PER_COOLDOWN,
+  needsWebSearch,
 } from "@/lib/ai-services";
 import { GUEST_CHAT_LIMIT, useGuestChatQuota } from "@/lib/guest-chat-quota";
 import { useAuth } from "@/hooks/use-auth";
@@ -403,6 +404,7 @@ function ChatPage() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [webSearchProgress, setWebSearchProgress] = useState<{ status: 'started' | 'complete'; query: string; count: number; sources: string[] } | null>(null);
+  const [searchConsent, setSearchConsent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string>(() => createId());
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
@@ -609,7 +611,7 @@ function ChatPage() {
   }, []);
 
   const send = useCallback(
-    async (text: string, atts: ChatAttachment[] = []) => {
+    async (text: string, atts: ChatAttachment[] = [], useSearch = false) => {
       if ((!text.trim() && atts.length === 0) || isLoading) return;
       // Enforce free-tier limit for guests
       if (!user && guestLimitReached) {
@@ -653,7 +655,7 @@ function ChatPage() {
       
       await streamChat(
         [...messages, userMsg].map((m) => ({ role: m.role, content: m.content })),
-        true,
+        useSearch,
         (chunk) => {
           full += chunk;
           setMessages((prev) =>
@@ -714,11 +716,16 @@ function ChatPage() {
   );
 
   const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() && attachments.length === 0) return;
-    send(input, attachments);
-    setInput("");
-    setAttachments([]);
+  e.preventDefault();
+  if (!input.trim() && attachments.length === 0) return;
+  if (attachments.length === 0 && needsWebSearch(input) && searchConsent !== input.trim()) {
+    setSearchConsent(input.trim());
+    return;
+  }
+  send(input, attachments, searchConsent === input.trim());
+  setSearchConsent(null);
+  setInput("");
+  setAttachments([]);
   };
 
   const onPickFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1004,9 +1011,10 @@ function ChatPage() {
             /* ============================ MOBILE COMPOSER ============================ */
             <form
               onSubmit={onSubmit}
-              className="px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
-            >
-              <div className="px-1">
+  className="px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+  >
+  {searchConsent && <div className="tf-search-consent" role="dialog" aria-label="Allow web search"><span>Search the web for current information?</span><button type="submit">Search</button><button type="button" onClick={() => setSearchConsent(null)}>Not now</button></div>}
+  <div className="px-1">
                 <AttachmentTray items={attachments} onRemove={removeAttachment} />
               </div>
               <div className={"tf-composer-field " + (modelMode === "quality" ? "tf-composer-field-quality " : "") + "flex items-center gap-1 rounded-full border border-border bg-cream/60 pl-2 pr-1.5 py-1.5"}>
@@ -1073,6 +1081,7 @@ function ChatPage() {
               onSubmit={onSubmit}
               className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-10 py-3 sm:py-5"
             >
+              {searchConsent && <div className="tf-search-consent" role="dialog" aria-label="Allow web search"><span>Search the web for current information?</span><button type="submit">Search</button><button type="button" onClick={() => setSearchConsent(null)}>Not now</button></div>}
               <AttachmentTray items={attachments} onRemove={removeAttachment} />
               <div className={"tf-composer-field " + (modelMode === "quality" ? "tf-composer-field-quality " : "") + "flex items-center gap-2 rounded-full bg-cream/60 border border-border pl-3 pr-2.5 py-2"}>
                 <button

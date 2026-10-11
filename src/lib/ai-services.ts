@@ -39,7 +39,7 @@ function isNewsQuery(query: string): boolean {
   return newsKeywords.some((k) => q.includes(k));
 }
 
-function needsWebSearch(query: string): boolean {
+export function needsWebSearch(query: string): boolean {
   const triggers = [
     "news", "hírek", "hír", "latest", "recent", "today", "current", "now",
     "who is", "what is", "where is", "when did", "how much", "price",
