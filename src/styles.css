@@ -791,6 +791,32 @@
   .tf-chat-page .tf-search-consent { background: #080808; }
 }
 
+:not(.dark) .tf-chat-page {
+  background: #f7f7f5;
+  color: #151515;
+}
+:not(.dark) .tf-chat-page .tf-composer-field {
+  border-color: #d9d9d5;
+  background: #ffffff;
+  color: #151515;
+  box-shadow: 0 8px 24px rgba(20, 20, 20, 0.06);
+}
+:not(.dark) .tf-chat-page .tf-search-consent {
+  color: #444;
+  background: #ffffff;
+  border-color: #deded9;
+}
+:not(.dark) .tf-chat-page .tf-search-consent button {
+  color: #222;
+  background: #f3f3ef;
+  border-color: #deded9;
+}
+:not(.dark) .tf-chat-page .tf-search-consent button:first-of-type {
+  color: #fff;
+  background: #171717;
+  border-color: #171717;
+}
+
   @media (max-width: 640px) {
   .tf-chat-page .tf-bubble-ai {
     position: relative;
