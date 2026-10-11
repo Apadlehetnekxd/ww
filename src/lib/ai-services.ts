@@ -288,7 +288,8 @@ ${
       temperature: 0.5,
     };
     if (mode === "fast") {
-      requestBody.reasoning = { enabled: false };
+      // Nemotron's free route rejects provider-specific reasoning options.
+      // Keep the request to portable OpenAI-compatible fields only.
       requestBody.max_tokens = 1024;
     }
 
