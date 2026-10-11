@@ -749,7 +749,20 @@
 }
 .tf-bubble-ai {
   animation: tf-bubble-in-left 0.46s cubic-bezier(0.16, 1, 0.3, 1) both;
+  color: var(--foreground);
 }
+.tf-chat-page .tf-bubble-ai {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+.tf-chat-page .tf-search-progress {
+  color: color-mix(in oklab, var(--foreground) 54%, transparent);
+  border-color: color-mix(in oklab, var(--foreground) 14%, transparent);
+}
+.tf-search-consent { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 8px; padding: 10px 12px; color: color-mix(in oklab, var(--foreground) 68%, transparent); background: #080808; border: 1px solid #ffffff18; border-radius: 14px; font-size: 12px; }
+.tf-search-consent button { min-height: 32px; padding: 0 11px; border-radius: 999px; border: 1px solid #ffffff22; color: var(--foreground); background: #ffffff0d; font-size: 11px; }
+.tf-search-consent button:first-of-type { background: var(--foreground); color: var(--background); border-color: var(--foreground); }
 .tf-search-progress { display: inline-grid; gap: 2px; margin-left: 6px; padding-left: 10px; border-left: 1px solid color-mix(in oklab, var(--foreground) 18%, transparent); line-height: 1.1; }
 .tf-search-progress strong { color: var(--foreground); font-size: 11px; font-weight: 600; }
 .tf-search-progress small { color: color-mix(in oklab, var(--foreground) 48%, transparent); font-size: 9px; }
@@ -757,34 +770,26 @@
 @media (max-width: 640px) {
   .tf-chat-page .tf-bubble-ai {
     position: relative;
-    padding: 18px 16px 20px;
-    border: 1px solid color-mix(in oklab, var(--foreground) 12%, transparent);
-    border-radius: 24px;
-    background: linear-gradient(145deg, color-mix(in oklab, var(--foreground) 7%, transparent), transparent 55%);
-    box-shadow: inset 0 1px 0 color-mix(in oklab, var(--foreground) 14%, transparent), 0 16px 40px color-mix(in oklab, var(--foreground) 8%, transparent);
-    backdrop-filter: blur(22px) saturate(135%);
-    -webkit-backdrop-filter: blur(22px) saturate(135%);
+    width: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
-  .tf-chat-page .tf-bubble-ai::before {
-    content: "AI RESPONSE";
-    display: block;
-    margin-bottom: 12px;
-    color: color-mix(in oklab, var(--foreground) 52%, transparent);
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.16em;
-  }
+  .tf-chat-page .tf-bubble-ai::before,
   .tf-chat-page .tf-bubble-ai::after {
-    content: "";
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    width: 6px;
-    height: 6px;
-    border-radius: 999px;
-    background: var(--highlight);
-    box-shadow: 0 0 14px var(--highlight);
-    animation: tf-live-pulse 1.8s ease-in-out infinite;
+    display: none;
+    content: none;
+  }
+  .tf-chat-page .tf-prose p {
+    font-size: 1rem;
+    line-height: 1.62;
+  }
+  .tf-chat-page .tf-prose > * + * {
+    margin-top: 0.9em;
   }
 }
 
