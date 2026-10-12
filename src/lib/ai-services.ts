@@ -63,13 +63,14 @@ async function performWebSearch(query: string, onProgress?: StreamChatOptions['o
     const payload = await response.json() as { results?: Array<{ title: string; link: string; snippet?: string; source?: string }>; error?: string };
     if (!response.ok || !payload.results?.length) {
       onProgress?.({ status: 'complete', query, count: 0, sources: [] });
-      return '';
+      return `[WEB SEARCH FAILED FOR: ${query}]\nLive search returned no usable sources. Do not guess current facts. Tell the user that live search is temporarily unavailable and ask them to try again.`;
     }
     const sources = payload.results.map((result) => result.source || (result.link ? new URL(result.link).hostname : 'Web'));
     onProgress?.({ status: 'complete', query, count: payload.results.length, sources });
     return `[LIVE WEB SOURCES FOR: ${query}]\n${payload.results.map((result, index) => `${index + 1}. [${result.title}](${result.link}) — ${result.source || 'Web'}\n${result.snippet || ''}`).join('\n')}\n[END LIVE WEB SOURCES]\nUse these current sources and cite the relevant claims as clickable markdown links in the answer.`;
   } catch {
-    return '';
+    onProgress?.({ status: 'complete', query, count: 0, sources: [] });
+    return `[WEB SEARCH FAILED FOR: ${query}]\nLive search could not be reached. Do not guess current facts. Tell the user that live search is temporarily unavailable and ask them to try again.`;
   }
 }
 
@@ -229,6 +230,8 @@ IMPORTANT RESPONSE GUIDELINES:
 - For news or current events, present information as a flowing narrative with bullet points, NOT tables.
 - Keep your tone helpful, engaging, and approachable.
 - When live web sources are provided, cite the relevant claims with the supplied markdown links. Never invent links or hide the sources.
+- Never claim to know the current time, weather, prices, news, scores, or other changing facts from memory. If the user asks for changing/current information, use the live web sources when available; if search failed, clearly say that live search is unavailable instead of guessing.
+- For time questions, distinguish the current time from the date and do not invent a timezone or clock time. Ask for the city/timezone if it is not clear.
 ${mode === "fast" ? "- Speed mode: answer directly and concisely so the response arrives as quickly as possible. Avoid unnecessary reasoning or repetition.\n" : ""}
 ${mode === "ultra" ? "- Ultra mode: provide exactly one deeply considered final answer. Think through assumptions, check important details, and give a calm, complete response. Do not provide multiple drafts, second opinions, or mention internal model instructions.\n" : ""}
 \nFILE OUTPUT:
