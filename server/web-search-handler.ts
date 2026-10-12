@@ -9,8 +9,9 @@ export async function handleWebSearchRequest(request: Request, env: WebSearchEnv
   const query = body.query?.trim().slice(0, 300);
   if (!query) return Response.json({ results: [] });
   if (!env.SERPAPI_KEY) return Response.json({ error: 'Web search is not configured.' }, { status: 503 });
-  const locale = body.locale === 'hu' ? 'hu' : 'en';
-  const params = new URLSearchParams({ engine: 'google', q: query, api_key: env.SERPAPI_KEY, num: '6', hl: locale, gl: locale });
+  const language = body.locale === 'hu' ? 'hu' : 'en';
+  const country = body.locale === 'hu' ? 'hu' : 'us';
+  const params = new URLSearchParams({ engine: 'google', q: query, api_key: env.SERPAPI_KEY, num: '6', hl: language, gl: country });
   try {
     const response = await fetch(`https://serpapi.com/search.json?${params}`, { signal: AbortSignal.timeout(12_000) });
     const data = await response.json() as { error?: string; organic_results?: OrganicResult[] };
