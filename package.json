@@ -9,6 +9,7 @@
     "dev:phone": "vite --mode phone",
     "test": "playwright test",
     "test:scan": "node --experimental-strip-types --test tests/scan-tracker.test.ts",
+    "test:web-intelligence": "node --experimental-strip-types --test tests/web-intelligence.test.ts",
     "typecheck": "tsc --noEmit",
     "build": "vite build",
     "build:dev": "vite build --mode development",

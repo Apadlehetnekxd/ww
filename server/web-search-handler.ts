@@ -4,12 +4,14 @@ type OrganicResult = { title?: string; link?: string; snippet?: string; source?:
 
 export async function handleWebSearchRequest(request: Request, env: WebSearchEnvironment): Promise<Response> {
   if (request.method !== 'POST') return Response.json({ error: 'Method not allowed.' }, { status: 405 });
-  let body: { query?: string };
+  let body: { query?: string; locale?: string };
   try { body = await request.json() as typeof body; } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }); }
   const query = body.query?.trim().slice(0, 300);
   if (!query) return Response.json({ results: [] });
   if (!env.SERPAPI_KEY) return Response.json({ error: 'Web search is not configured.' }, { status: 503 });
-  const params = new URLSearchParams({ engine: 'google', q: query, api_key: env.SERPAPI_KEY, num: '6', hl: 'en' });
+  const language = body.locale === 'hu' ? 'hu' : 'en';
+  const country = body.locale === 'hu' ? 'hu' : 'us';
+  const params = new URLSearchParams({ engine: 'google', q: query, api_key: env.SERPAPI_KEY, num: '6', hl: language, gl: country });
   try {
     const response = await fetch(`https://serpapi.com/search.json?${params}`, { signal: AbortSignal.timeout(12_000) });
     const data = await response.json() as { error?: string; organic_results?: OrganicResult[] };

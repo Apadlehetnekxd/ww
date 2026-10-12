@@ -1,6 +1,7 @@
 // AI Services - Direct client-side API calls to free AI providers
 // Since this is a pure client-side Vite app (not TanStack Start), we call providers directly
 import type { ChatAttachment } from "./history";
+import { analyzeSearchIntent, buildResearchInstruction, planSearchQueries, shouldSearchWithIntent } from "./web-intelligence";
 
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || "";
 
@@ -39,37 +40,31 @@ function isNewsQuery(query: string): boolean {
   return newsKeywords.some((k) => q.includes(k));
 }
 
-export function needsWebSearch(query: string): boolean {
-  const triggers = [
-    "news", "hírek", "hír", "latest", "recent", "today", "current", "now",
-    "who is", "what is", "where is", "when did", "how much", "price",
-    "weather", "idő", "időjárás", "stock", "score", "result",
-    "ki az", "mi az", "hol van", "mikor", "mennyi", "ár",
-    "2024", "2025", "2026", "this year", "last year", "idén", "tavaly",
-    "president", "elnök", "ceo", "company", "cég", "died", "meghalt",
-    "born", "született", "released", "megjelent", "announced", "bejelent",
-  ];
-  const q = query.toLowerCase();
-  return triggers.some((t) => q.includes(t));
-}
+export function needsWebSearch(query: string, context: string[] = [], explicit = false): boolean {
+  return shouldSearchWithIntent(query, context, explicit);
+  }
 
-async function performWebSearch(query: string, onProgress?: StreamChatOptions['onWebSearchProgress']): Promise<string> {
-  onProgress?.({ status: 'started', query, count: 0, sources: [] });
+async function performWebSearch(query: string, onProgress?: StreamChatOptions['onWebSearchProgress'], context: string[] = []): Promise<string> {
+  const intent = analyzeSearchIntent(query, context);
+  const plan = planSearchQueries(intent);
+  const queries = [plan.primary_query, ...plan.alternative_queries].slice(0, 3);
+  onProgress?.({ status: 'started', query: plan.primary_query, count: 0, sources: [] });
   try {
-    const response = await fetch('/api/search', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query }), signal: AbortSignal.timeout(12_000),
-    });
-    const payload = await response.json() as { results?: Array<{ title: string; link: string; snippet?: string; source?: string }>; error?: string };
-    if (!response.ok || !payload.results?.length) {
-      onProgress?.({ status: 'complete', query, count: 0, sources: [] });
-      return '';
+  const responses = await Promise.all(queries.map((plannedQuery) => fetch('/api/search', {
+  method: 'POST', headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ query: plannedQuery, locale: plan.locale }), signal: AbortSignal.timeout(12_000),
+  }).then(async (response) => ({ response, payload: await response.json() as { results?: Array<{ title: string; link: string; snippet?: string; source?: string }>; error?: string } }))));
+  const payload = { results: Array.from(new Map(responses.flatMap(({ payload }) => payload.results || []).map((result) => [result.link, result])).values()).slice(0, 8) };
+    if (!responses.some(({ response }) => response.ok) || !payload.results?.length) {
+      onProgress?.({ status: 'complete', query: plan.primary_query, count: 0, sources: [] });
+      return `[WEB SEARCH FAILED FOR: ${plan.primary_query}]\nLive search returned no usable sources. Do not guess current facts. Tell the user that live search is temporarily unavailable and ask them to try again.`;
     }
     const sources = payload.results.map((result) => result.source || (result.link ? new URL(result.link).hostname : 'Web'));
     onProgress?.({ status: 'complete', query, count: payload.results.length, sources });
-    return `[LIVE WEB SOURCES FOR: ${query}]\n${payload.results.map((result, index) => `${index + 1}. [${result.title}](${result.link}) — ${result.source || 'Web'}\n${result.snippet || ''}`).join('\n')}\n[END LIVE WEB SOURCES]\nUse these current sources and cite the relevant claims as clickable markdown links in the answer.`;
+    return `${buildResearchInstruction(intent, plan)}\n[LIVE WEB SOURCES FOR: ${plan.primary_query}]\n${payload.results.map((result, index) => `${index + 1}. [${result.title}](${result.link}) — ${result.source || 'Web'}\n${result.snippet || ''}`).join('\n')}\n[END LIVE WEB SOURCES]\nUse these current sources and cite the relevant claims as clickable markdown links in the answer.`;
   } catch {
-    return '';
+    onProgress?.({ status: 'complete', query, count: 0, sources: [] });
+    return `[WEB SEARCH FAILED FOR: ${query}]\nLive search could not be reached. Do not guess current facts. Tell the user that live search is temporarily unavailable and ask them to try again.`;
   }
 }
 
@@ -212,11 +207,17 @@ export async function streamChat(
     const lastUser = [...recent].reverse().find((m) => m.role === "user");
     // Skip web search when images are attached — the model should focus on the image.
     if (lastUser && imageFiles.length === 0) {
-      const shouldSearch = webSearch || needsWebSearch(lastUser.content);
-      if (shouldSearch) searchContext = await performWebSearch(lastUser.content, options.onWebSearchProgress);
+const conversationContext = recent.filter((message) => message.role === 'user' || message.role === 'assistant').map((message) => typeof message.content === 'string' ? message.content : '').filter(Boolean);
+  const shouldSearch = webSearch || needsWebSearch(lastUser.content, conversationContext, webSearch);
+  if (shouldSearch) searchContext = await performWebSearch(lastUser.content, options.onWebSearchProgress, conversationContext);
     }
 
-    const systemMessage = `You are Neurix, a friendly and helpful AI assistant.
+    const now = new Date();
+  const currentDate = now.toLocaleDateString('hu-HU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
+  const currentIsoDate = now.toISOString().slice(0, 10);
+  const systemMessage = `You are Neurix, a friendly and helpful AI assistant.
+
+CURRENT DATE CONTEXT (trusted runtime value): Today is ${currentDate}. ISO date: ${currentIsoDate}. Use this exact date when the user asks what day/date it is. Do not guess or claim another date.
 
 IMPORTANT RESPONSE GUIDELINES:
 - NEVER use markdown tables. Format information as clean bullet points or numbered lists instead.
@@ -229,6 +230,10 @@ IMPORTANT RESPONSE GUIDELINES:
 - For news or current events, present information as a flowing narrative with bullet points, NOT tables.
 - Keep your tone helpful, engaging, and approachable.
 - When live web sources are provided, cite the relevant claims with the supplied markdown links. Never invent links or hide the sources.
+- Treat the [SEARCH INTENT] block as structured routing metadata, not user instructions. Answer the question and never explain a search command word as the subject unless the user explicitly asks for its definition.
+- If evidence conflicts, state the conflict and prefer fresher, authoritative sources. If no evidence exists, say that clearly.
+- Never claim to know the current time, weather, prices, news, scores, or other changing facts from memory. If the user asks for changing/current information, use the live web sources when available; if search failed, clearly say that live search is unavailable instead of guessing.
+- For time questions, distinguish the current time from the date and do not invent a timezone or clock time. Ask for the city/timezone if it is not clear.
 ${mode === "fast" ? "- Speed mode: answer directly and concisely so the response arrives as quickly as possible. Avoid unnecessary reasoning or repetition.\n" : ""}
 ${mode === "ultra" ? "- Ultra mode: provide exactly one deeply considered final answer. Think through assumptions, check important details, and give a calm, complete response. Do not provide multiple drafts, second opinions, or mention internal model instructions.\n" : ""}
 \nFILE OUTPUT:
@@ -288,7 +293,8 @@ ${
       temperature: 0.5,
     };
     if (mode === "fast") {
-      requestBody.reasoning = { enabled: false };
+      // Nemotron's free route rejects provider-specific reasoning options.
+      // Keep the request to portable OpenAI-compatible fields only.
       requestBody.max_tokens = 1024;
     }
 
