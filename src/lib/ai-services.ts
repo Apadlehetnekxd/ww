@@ -41,9 +41,9 @@ function isNewsQuery(query: string): boolean {
 
 export function needsWebSearch(query: string): boolean {
   const triggers = [
-    "news", "hírek", "hír", "latest", "recent", "today", "current", "now",
+    "news", "hírek", "hír", "latest", "recent", "today", "current", "now", "dátum", "datum", "nap van ma", "milyen nap van ma",
     "who is", "what is", "where is", "when did", "how much", "price",
-    "weather", "idő", "időjárás", "stock", "score", "result",
+    "weather", "idő", "időjárás", "milyen nap", "ma milyen nap", "hányadika", "mai dátum", "today's date", "what day is it", "stock", "score", "result",
     "ki az", "mi az", "hol van", "mikor", "mennyi", "ár",
     "2024", "2025", "2026", "this year", "last year", "idén", "tavaly",
     "president", "elnök", "ceo", "company", "cég", "died", "meghalt",
@@ -217,7 +217,12 @@ export async function streamChat(
       if (shouldSearch) searchContext = await performWebSearch(lastUser.content, options.onWebSearchProgress);
     }
 
-    const systemMessage = `You are Neurix, a friendly and helpful AI assistant.
+    const now = new Date();
+  const currentDate = now.toLocaleDateString('hu-HU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
+  const currentIsoDate = now.toISOString().slice(0, 10);
+  const systemMessage = `You are Neurix, a friendly and helpful AI assistant.
+
+CURRENT DATE CONTEXT (trusted runtime value): Today is ${currentDate}. ISO date: ${currentIsoDate}. Use this exact date when the user asks what day/date it is. Do not guess or claim another date.
 
 IMPORTANT RESPONSE GUIDELINES:
 - NEVER use markdown tables. Format information as clean bullet points or numbered lists instead.
