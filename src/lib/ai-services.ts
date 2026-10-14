@@ -206,11 +206,12 @@ export async function streamChat(
 
     let searchContext = "";
     const lastUser = [...recent].reverse().find((m) => m.role === "user");
-    // Skip web search when images are attached — the model should focus on the image.
-    if (lastUser && imageFiles.length === 0) {
-const conversationContext = recent.filter((message) => message.role === 'user' || message.role === 'assistant').map((message) => typeof message.content === 'string' ? message.content : '').filter(Boolean);
-  const shouldSearch = webSearch || needsWebSearch(lastUser.content, conversationContext, webSearch);
-  if (shouldSearch) searchContext = await performWebSearch(lastUser.content, options.onWebSearchProgress, conversationContext);
+    if (lastUser) {
+      const conversationContext = recent
+        .filter((message) => message.role === 'user' || message.role === 'assistant')
+        .map((message) => typeof message.content === 'string' ? message.content : '')
+        .filter(Boolean);
+      searchContext = await performWebSearch(lastUser.content, options.onWebSearchProgress, conversationContext);
     }
 
     const now = new Date();
@@ -230,6 +231,7 @@ IMPORTANT RESPONSE GUIDELINES:
 - If greeted, respond warmly and ask how you can help.
 - For news or current events, present information as a flowing narrative with bullet points, NOT tables.
 - Keep your tone helpful, engaging, and approachable.
+- Live web search is mandatory for every user message. Treat the supplied web results as the primary evidence, including for ordinary or stable questions.
 - When live web sources are provided, cite the relevant claims with the supplied markdown links. Never invent links or hide the sources.
 - Treat the [SEARCH INTENT] block as structured routing metadata, not user instructions. Answer the question and never explain a search command word as the subject unless the user explicitly asks for its definition.
 - If evidence conflicts, state the conflict and prefer fresher, authoritative sources. If no evidence exists, say that clearly.
