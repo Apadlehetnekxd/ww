@@ -9,20 +9,21 @@ export type ChatModelMode = "fast" | "quality" | "ultra";
 export const ULTRA_COOLDOWN_MS = 10 * 60 * 1000;
 export const ULTRA_MESSAGES_PER_COOLDOWN = 5;
 
-const QUALITY_MODEL = "dots-studio/dots-3-note-preview:free";
+const QUALITY_MODEL = "nvidia/nemotron-3-super-120b-a12b:free";
 const SPEED_MODEL = "nvidia/nemotron-3.5-lightning:free";
+const ULTRA_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free";
 
 const OPENROUTER_CHAT_MODELS: Record<ChatModelMode, string> = {
   fast: SPEED_MODEL,
   quality: QUALITY_MODEL,
-  ultra: QUALITY_MODEL,
+  ultra: ULTRA_MODEL,
 };
 
 // Keep attachment requests on the model selected for the current mode.
 const OPENROUTER_VISION_MODELS: Record<ChatModelMode, string> = {
   fast: SPEED_MODEL,
   quality: QUALITY_MODEL,
-  ultra: QUALITY_MODEL,
+  ultra: ULTRA_MODEL,
 };
 
 // ============================================================================
@@ -277,7 +278,7 @@ ${
         systemMessage +
         "\n\nULTRA ROLE: Return one polished final answer only. Work through the request carefully before responding, prioritize accuracy over speed, and keep the result useful and natural. Do not show drafts, alternatives, or a second opinion.";
 
-      const answer = await collectOpenRouterAnswer(QUALITY_MODEL, [
+      const answer = await collectOpenRouterAnswer(ULTRA_MODEL, [
         { role: "system", content: ultraPrompt },
         ...ultraMessages,
       ]);
