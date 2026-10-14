@@ -58,14 +58,14 @@ async function performWebSearch(query: string, onProgress?: StreamChatOptions['o
   const payload = { results: Array.from(new Map(responses.flatMap(({ payload }) => payload.results || []).map((result) => [result.link, result])).values()).slice(0, 8) };
     if (!responses.some(({ response }) => response.ok) || !payload.results?.length) {
       onProgress?.({ status: 'complete', query: plan.primary_query, count: 0, sources: [] });
-      return `[WEB SEARCH FAILED FOR: ${plan.primary_query}]\nLive search returned no usable sources. Do not guess current facts. Tell the user that live search is temporarily unavailable and ask them to try again.`;
+      throw new Error("Live web search is temporarily unavailable. Please try again in a moment.");
     }
     const sources = payload.results.map((result) => result.source || (result.link ? new URL(result.link).hostname : 'Web'));
     onProgress?.({ status: 'complete', query, count: payload.results.length, sources });
     return `${buildResearchInstruction(intent, plan)}\n[LIVE WEB SOURCES FOR: ${plan.primary_query}]\n${payload.results.map((result, index) => `${index + 1}. [${result.title}](${result.link}) — ${result.source || 'Web'}\n${result.snippet || ''}`).join('\n')}\n[END LIVE WEB SOURCES]\nUse these current sources and cite the relevant claims as clickable markdown links in the answer.`;
   } catch {
     onProgress?.({ status: 'complete', query, count: 0, sources: [] });
-    return `[WEB SEARCH FAILED FOR: ${query}]\nLive search could not be reached. Do not guess current facts. Tell the user that live search is temporarily unavailable and ask them to try again.`;
+    throw new Error("Live web search is temporarily unavailable. Please try again in a moment.");
   }
 }
 
@@ -350,8 +350,12 @@ ${
 
     onDone();
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Something went wrong";
-    if (/unauthorized|401|invalid api key|authentication failed/i.test(message)) {
+  const message = e instanceof Error ? e.message : "Something went wrong";
+  if (/live web search is temporarily unavailable/i.test(message)) {
+  onError(message);
+  return;
+  }
+  if (/unauthorized|401|invalid api key|authentication failed/i.test(message)) {
       onError("OpenRouter authentication failed. Set a valid VITE_OPENROUTER_API_KEY in .env and restart the dev server.");
       return;
     }
