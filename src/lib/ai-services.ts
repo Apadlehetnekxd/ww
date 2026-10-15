@@ -51,12 +51,15 @@ async function performWebSearch(query: string, onProgress?: StreamChatOptions['o
   const queries = [plan.primary_query, ...plan.alternative_queries].slice(0, 3);
   onProgress?.({ status: 'started', query: plan.primary_query, count: 0, sources: [] });
   try {
-  const responses = await Promise.all(queries.map((plannedQuery) => fetch('/api/search', {
+  const responses = await Promise.allSettled(queries.map((plannedQuery) => fetch('/api/search', {
   method: 'POST', headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ query: plannedQuery, locale: plan.locale }), signal: AbortSignal.timeout(12_000),
   }).then(async (response) => ({ response, payload: await response.json() as { results?: Array<{ title: string; link: string; snippet?: string; source?: string }>; error?: string } }))));
-  const payload = { results: Array.from(new Map(responses.flatMap(({ payload }) => payload.results || []).map((result) => [result.link, result])).values()).slice(0, 8) };
-    if (!responses.some(({ response }) => response.ok) || !payload.results?.length) {
+  const successfulResponses = responses
+    .filter((result): result is PromiseFulfilledResult<{ response: Response; payload: { results?: Array<{ title: string; link: string; snippet?: string; source?: string }>; error?: string } }> => result.status === 'fulfilled')
+    .map((result) => result.value);
+  const payload = { results: Array.from(new Map(successfulResponses.flatMap(({ payload }) => payload.results || []).map((result) => [result.link, result])).values()).slice(0, 8) };
+    if (!successfulResponses.some(({ response }) => response.ok) || !payload.results?.length) {
       onProgress?.({ status: 'complete', query: plan.primary_query, count: 0, sources: [] });
       throw new Error("Live web search is temporarily unavailable. Please try again in a moment.");
     }
