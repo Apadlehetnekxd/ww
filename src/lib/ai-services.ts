@@ -51,21 +51,24 @@ async function performWebSearch(query: string, onProgress?: StreamChatOptions['o
   const queries = [plan.primary_query, ...plan.alternative_queries].slice(0, 3);
   onProgress?.({ status: 'started', query: plan.primary_query, count: 0, sources: [] });
   try {
-  const responses = await Promise.all(queries.map((plannedQuery) => fetch('/api/search', {
+  const responses = await Promise.allSettled(queries.map((plannedQuery) => fetch('/api/search', {
   method: 'POST', headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ query: plannedQuery, locale: plan.locale }), signal: AbortSignal.timeout(12_000),
   }).then(async (response) => ({ response, payload: await response.json() as { results?: Array<{ title: string; link: string; snippet?: string; source?: string }>; error?: string } }))));
-  const payload = { results: Array.from(new Map(responses.flatMap(({ payload }) => payload.results || []).map((result) => [result.link, result])).values()).slice(0, 8) };
-    if (!responses.some(({ response }) => response.ok) || !payload.results?.length) {
+  const successfulResponses = responses
+    .filter((result): result is PromiseFulfilledResult<{ response: Response; payload: { results?: Array<{ title: string; link: string; snippet?: string; source?: string }>; error?: string } }> => result.status === 'fulfilled')
+    .map((result) => result.value);
+  const payload = { results: Array.from(new Map(successfulResponses.flatMap(({ payload }) => payload.results || []).map((result) => [result.link, result])).values()).slice(0, 8) };
+    if (!successfulResponses.some(({ response }) => response.ok) || !payload.results?.length) {
       onProgress?.({ status: 'complete', query: plan.primary_query, count: 0, sources: [] });
-      return `[WEB SEARCH FAILED FOR: ${plan.primary_query}]\nLive search returned no usable sources. Do not guess current facts. Tell the user that live search is temporarily unavailable and ask them to try again.`;
+      throw new Error("Live web search is temporarily unavailable. Please try again in a moment.");
     }
     const sources = payload.results.map((result) => result.source || (result.link ? new URL(result.link).hostname : 'Web'));
     onProgress?.({ status: 'complete', query, count: payload.results.length, sources });
     return `${buildResearchInstruction(intent, plan)}\n[LIVE WEB SOURCES FOR: ${plan.primary_query}]\n${payload.results.map((result, index) => `${index + 1}. [${result.title}](${result.link}) — ${result.source || 'Web'}\n${result.snippet || ''}`).join('\n')}\n[END LIVE WEB SOURCES]\nUse these current sources and cite the relevant claims as clickable markdown links in the answer.`;
   } catch {
     onProgress?.({ status: 'complete', query, count: 0, sources: [] });
-    return `[WEB SEARCH FAILED FOR: ${query}]\nLive search could not be reached. Do not guess current facts. Tell the user that live search is temporarily unavailable and ask them to try again.`;
+    throw new Error("Live web search is temporarily unavailable. Please try again in a moment.");
   }
 }
 
@@ -206,11 +209,12 @@ export async function streamChat(
 
     let searchContext = "";
     const lastUser = [...recent].reverse().find((m) => m.role === "user");
-    // Skip web search when images are attached — the model should focus on the image.
-    if (lastUser && imageFiles.length === 0) {
-const conversationContext = recent.filter((message) => message.role === 'user' || message.role === 'assistant').map((message) => typeof message.content === 'string' ? message.content : '').filter(Boolean);
-  const shouldSearch = webSearch || needsWebSearch(lastUser.content, conversationContext, webSearch);
-  if (shouldSearch) searchContext = await performWebSearch(lastUser.content, options.onWebSearchProgress, conversationContext);
+    if (lastUser) {
+      const conversationContext = recent
+        .filter((message) => message.role === 'user' || message.role === 'assistant')
+        .map((message) => typeof message.content === 'string' ? message.content : '')
+        .filter(Boolean);
+      searchContext = await performWebSearch(lastUser.content, options.onWebSearchProgress, conversationContext);
     }
 
     const now = new Date();
@@ -230,6 +234,7 @@ IMPORTANT RESPONSE GUIDELINES:
 - If greeted, respond warmly and ask how you can help.
 - For news or current events, present information as a flowing narrative with bullet points, NOT tables.
 - Keep your tone helpful, engaging, and approachable.
+- Live web search is mandatory for every user message. Treat the supplied web results as the primary evidence, including for ordinary or stable questions.
 - When live web sources are provided, cite the relevant claims with the supplied markdown links. Never invent links or hide the sources.
 - Treat the [SEARCH INTENT] block as structured routing metadata, not user instructions. Answer the question and never explain a search command word as the subject unless the user explicitly asks for its definition.
 - If evidence conflicts, state the conflict and prefer fresher, authoritative sources. If no evidence exists, say that clearly.
@@ -350,8 +355,12 @@ ${
 
     onDone();
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Something went wrong";
-    if (/unauthorized|401|invalid api key|authentication failed/i.test(message)) {
+  const message = e instanceof Error ? e.message : "Something went wrong";
+  if (/live web search is temporarily unavailable/i.test(message)) {
+  onError(message);
+  return;
+  }
+  if (/unauthorized|401|invalid api key|authentication failed/i.test(message)) {
       onError("OpenRouter authentication failed. Set a valid VITE_OPENROUTER_API_KEY in .env and restart the dev server.");
       return;
     }
