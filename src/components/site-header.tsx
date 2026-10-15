@@ -60,19 +60,20 @@ export function SiteHeader() {
         <Link to="/" className="font-semibold tracking-tight text-base sm:text-lg shrink-0">
           Neurix<span className="text-ink-soft">®</span>
         </Link>
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-1 rounded-full border border-border/80 bg-background/60 p-1" aria-label="Primary navigation">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const active = pathname === item.to;
+            const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
             return (
               <Link
                 key={item.to}
                 to={item.to}
+                aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-2 px-4 h-10 rounded-full text-sm font-medium transition-colors",
+                  "flex items-center gap-2 px-4 h-9 rounded-full text-sm font-medium transition-[background-color,color,box-shadow] duration-200",
                   active
-                    ? "bg-foreground text-background"
-                    : "text-ink-soft hover:text-foreground hover:bg-cream"
+                    ? "bg-foreground text-background shadow-sm"
+                    : "text-foreground/70 hover:text-foreground hover:bg-foreground/10"
                 )}
               >
                 <Icon className="size-4" />
