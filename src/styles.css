@@ -1488,7 +1488,13 @@ body:has(.tf-chat-page) .tf-menu-blob {
 }
 
 .image-generator[data-image-state="idle"] .image-generator__dock {
-  top: 50%;
+  top: clamp(220px, 24vh, 300px);
+  transform: none;
+  }
+@media (max-width: 849px) {
+  .image-generator[data-image-state="idle"] .image-generator__dock {
+    top: clamp(210px, 29vh, 340px);
+  }
 }
 
 .image-generator[data-image-state="idle"] .image-generator__empty h1 {
