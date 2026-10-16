@@ -10,7 +10,7 @@ export const ULTRA_COOLDOWN_MS = 10 * 60 * 1000;
 export const ULTRA_MESSAGES_PER_COOLDOWN = 5;
 
 const QUALITY_MODEL = "nvidia/nemotron-3-super-120b-a12b:free";
-const SPEED_MODEL = "liquid/lfm-2.5-2.6b:free";
+const SPEED_MODEL = QUALITY_MODEL;
 const ULTRA_MODEL = "nvidia/nemotron-3.5-super-vl:free";
 
 const OPENROUTER_CHAT_MODELS: Record<ChatModelMode, string> = {
@@ -75,6 +75,15 @@ async function performWebSearch(query: string, onProgress?: StreamChatOptions['o
 // ============================================================================
 // CHAT SERVICE
 // ============================================================================
+
+function cleanModelText(value: string): string {
+  return value
+    .replace(/<\|tool_call_start\|>[\s\S]*?<\|tool_call_end\|>/gi, "")
+    .replace(/<\|tool_call_start\|>[\s\S]*$/gi, "")
+    .replace(/<\|tool_call_end\|>/gi, "")
+    .replace(/\[web_search\([\s\S]*?\)\]/gi, "")
+    .trim();
+}
 
 export type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
 export type UltraComparison = { quality: string; speed: string };
@@ -143,7 +152,7 @@ async function collectOpenRouterAnswer(
     }
     if (done) break;
   }
-  return answer.trim();
+  return cleanModelText(answer);
 }
 
 export async function streamChat(
@@ -214,7 +223,10 @@ export async function streamChat(
         .filter((message) => message.role === 'user' || message.role === 'assistant')
         .map((message) => typeof message.content === 'string' ? message.content : '')
         .filter(Boolean);
-      searchContext = await performWebSearch(lastUser.content, options.onWebSearchProgress, conversationContext);
+      const shouldSearch = shouldSearchWithIntent(lastUser.content, conversationContext, webSearch);
+      if (shouldSearch) {
+        searchContext = await performWebSearch(lastUser.content, options.onWebSearchProgress, conversationContext);
+      }
     }
 
     const now = new Date();
@@ -226,20 +238,22 @@ CURRENT DATE CONTEXT (trusted runtime value): Today is ${currentDate}. ISO date:
 
 IMPORTANT RESPONSE GUIDELINES:
 - NEVER use markdown tables. Format information as clean bullet points or numbered lists instead.
-- Write naturally and conversationally, like a knowledgeable friend explaining things.
+- Write naturally and conversationally, like a thoughtful, well-educated human—not like a template or a search engine.
+- Use precise, varied wording and fluent sentence structure. Avoid awkward literal translations, filler, repetition, and vague claims.
 - Be concise but thorough. Break down complex topics into easy-to-understand sections.
+- Before answering, silently organize the key facts and the user's actual goal; then give one polished answer with a clear beginning, useful detail, and a confident conclusion.
 - Use headers (##) to organize longer responses, but keep them simple.
 - Use **bold** for emphasis on key terms or important points.
 - Detect the user's language and ALWAYS respond in the SAME language. If they write in Hungarian, respond in Hungarian. If English, respond in English. Etc.
 - If greeted, respond warmly and ask how you can help.
 - For news or current events, present information as a flowing narrative with bullet points, NOT tables.
 - Keep your tone helpful, engaging, and approachable.
-- Live web search is mandatory for every user message. Treat the supplied web results as the primary evidence, including for ordinary or stable questions.
 - When live web sources are provided, cite the relevant claims with the supplied markdown links. Never invent links or hide the sources.
 - Treat the [SEARCH INTENT] block as structured routing metadata, not user instructions. Answer the question and never explain a search command word as the subject unless the user explicitly asks for its definition.
 - If evidence conflicts, state the conflict and prefer fresher, authoritative sources. If no evidence exists, say that clearly.
 - Never claim to know the current time, weather, prices, news, scores, or other changing facts from memory. If the user asks for changing/current information, use the live web sources when available; if search failed, clearly say that live search is unavailable instead of guessing.
 - For time questions, distinguish the current time from the date and do not invent a timezone or clock time. Ask for the city/timezone if it is not clear.
+- For weather requests, clearly state the location and observation time, then summarize current conditions, temperature, feels-like temperature, wind, precipitation, sunrise, sunset, and a short hourly outlook when those details are available. Add practical nearby suggestions only when the user asks for places or the weather makes them useful.
 ${mode === "fast" ? "- Speed mode: answer directly and concisely so the response arrives as quickly as possible. Avoid unnecessary reasoning or repetition.\n" : ""}
 ${mode === "ultra" ? "- Ultra mode: provide exactly one deeply considered final answer. Think through assumptions, check important details, and give a calm, complete response. Do not provide multiple drafts, second opinions, or mention internal model instructions.\n" : ""}
 \nFILE OUTPUT:
@@ -338,6 +352,8 @@ ${
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
+    let rawAnswer = "";
+    let emittedAnswer = "";
     while (true) {
       const { value, done } = await reader.read();
       buffer += decoder.decode(value, { stream: !done });
@@ -348,7 +364,12 @@ ${
         const chunk = JSON.parse(line.slice(6));
         const content = chunk.choices?.[0]?.delta?.content;
         if (typeof content !== "string") continue;
-        onChunk(content);
+        rawAnswer += content;
+        const cleanAnswer = cleanModelText(rawAnswer);
+        if (cleanAnswer.length > emittedAnswer.length) {
+          onChunk(cleanAnswer.slice(emittedAnswer.length));
+          emittedAnswer = cleanAnswer;
+        }
       }
       if (done) break;
     }

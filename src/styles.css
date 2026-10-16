@@ -986,20 +986,15 @@ html:not(.dark) .tf-chat-page .tf-search-consent button:first-of-type {
 .tf-composer-field {
   position: relative;
   overflow: visible;
-  border: 1px solid var(--highlight);
+  border: 1px solid color-mix(in srgb, var(--foreground) 22%, transparent);
   border-radius: 24px;
   background: color-mix(in srgb, var(--cream) 45%, var(--background));
   box-shadow: none;
 }
 
 .tf-composer-field.tf-composer-field-quality {
-  border-color: #4f86ff;
-  background: color-mix(in srgb, #4f86ff 7%, var(--background));
-}
-
-.dark .tf-composer-field.tf-composer-field-quality {
-  border-color: #6599ff;
-  background: color-mix(in srgb, #4f86ff 10%, var(--background));
+  border-color: color-mix(in srgb, var(--foreground) 22%, transparent);
+  background: color-mix(in srgb, var(--cream) 45%, var(--background));
 }
 
 .tf-composer-field textarea {

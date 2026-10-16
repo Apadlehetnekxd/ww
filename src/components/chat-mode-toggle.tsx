@@ -134,11 +134,11 @@ export function ChatModeToggle({
               <span className="tf-model-popover-subtitle">
                 {isUltra
                   ? ultraCooldownRemainingMs > 0
-                    ? "Cooldown · " + Math.ceil(ultraCooldownRemainingMs / 60000) + " min"
-                    : "Thoughtful · " + ultraMessagesUntilCooldown + " left"
+                    ? "Lyra-3 · Cooldown · " + Math.ceil(ultraCooldownRemainingMs / 60000) + " min"
+                    : "Lyra-3 · Thoughtful · " + ultraMessagesUntilCooldown + " left"
                   : isFast
-                    ? "Nemotron"
-                    : "Dots"}
+                    ? "Neurix 2"
+                    : "Neurix 1.2"}
               </span>
             </div>
             <button
@@ -165,7 +165,7 @@ export function ChatModeToggle({
             <input
               aria-label="AI response mode slider"
               aria-valuetext={
-                isUltra ? "Ultra — one thoughtful answer" : isFast ? "Speed — Nemotron" : "Quality — Dots"
+                isUltra ? "Ultra — Lyra-3" : isFast ? "Speed — Neurix 2" : "Quality — Neurix 1.2"
               }
               disabled={disabled}
               type="range"
