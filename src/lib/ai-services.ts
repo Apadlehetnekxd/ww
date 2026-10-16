@@ -10,8 +10,8 @@ export const ULTRA_COOLDOWN_MS = 10 * 60 * 1000;
 export const ULTRA_MESSAGES_PER_COOLDOWN = 5;
 
 const QUALITY_MODEL = "nvidia/nemotron-3-super-120b-a12b:free";
-const SPEED_MODEL = "nvidia/nemotron-3.5-lightning:free";
-const ULTRA_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free";
+const SPEED_MODEL = "liquid/lfm-2.5-2.6b:free";
+const ULTRA_MODEL = "nvidia/nemotron-3.5-super-vl:free";
 
 const OPENROUTER_CHAT_MODELS: Record<ChatModelMode, string> = {
   fast: SPEED_MODEL,
@@ -111,7 +111,7 @@ async function collectOpenRouterAnswer(
       );
     }
     if (response.status === 429) {
-      throw new Error("One of the Ultra models is temporarily rate-limited. Please try again later.");
+      throw new Error("The selected model is temporarily rate-limited. Please try again later or choose another mode.");
     }
     if (response.status === 404) {
       throw new Error("One of the Ultra models is currently unavailable.");
