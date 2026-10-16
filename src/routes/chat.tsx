@@ -305,17 +305,38 @@ function FileBlock({ filename, content }: { filename: string; content: string })
   );
 }
 
-/** Editorial markdown renderer for assistant replies. */
+  type WeatherCardData = {
+    location?: string; day?: string; condition?: string; icon?: string; high?: string; low?: string;
+    rain?: string; wind?: string; summary?: string;
+  };
+
+  function WeatherCard({ data }: { data: WeatherCardData }) {
+    const icon = data.icon === "rain" ? "☂" : data.icon === "cloudy" ? "☁" : data.icon === "sunny" ? "☀" : "◒";
+    return <section className="tf-weather-card" aria-label="Weather forecast">
+      <div className="tf-weather-card-head"><span className="tf-weather-card-brand">Lyra</span><span className="tf-weather-card-icon" aria-hidden="true">{icon}</span></div>
+      <div className="tf-weather-card-main"><div><strong>{data.high || "—"}</strong><span>{data.low ? `/ ${data.low}` : ""}</span></div><p>{data.location || "Local forecast"} · {data.day || "Today"}</p><p className="tf-weather-condition">{data.condition || "Forecast"}</p></div>
+      {data.summary && <p className="tf-weather-summary">{data.summary}</p>}
+      <div className="tf-weather-stats"><span>Rain chance<strong>{data.rain || "—"}</strong></span><span>Wind<strong>{data.wind || "—"}</strong></span><span>Max / Min<strong>{data.high || "—"} / {data.low || "—"}</strong></span></div>
+    </section>;
+  }
+
+  /** Editorial markdown renderer for assistant replies. */
 function MarkdownReply({ text, compact = false }: { text: string; compact?: boolean }) {
+  const marker = text.match(/<!--WEATHER_CARD\s+({[\s\S]*?})-->/i);
+  let weather: WeatherCardData | null = null;
+  if (marker) { try { weather = JSON.parse(marker[1]) as WeatherCardData; } catch { weather = null; } }
+  const cleanText = text.replace(/<!--WEATHER_CARD\s+{[\s\S]*?}-->/gi, "").trim();
   return (
     <div
+
       className={
         "tf-prose text-foreground whitespace-normal break-words max-w-none" +
         (compact ? " tf-prose-compact" : "")
       }
-    >
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+  >
+  {weather && <WeatherCard data={weather} />}
+  <ReactMarkdown
+    remarkPlugins={[remarkGfm]}
         components={{
           pre({ children }) {
             // Detect our special ```file:<name> blocks and render an editor card.
@@ -336,8 +357,8 @@ function MarkdownReply({ text, compact = false }: { text: string; compact?: bool
           },
         }}
       >
-        {text}
-      </ReactMarkdown>
+  {cleanText}
+  </ReactMarkdown>
     </div>
   );
 }

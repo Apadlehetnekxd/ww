@@ -542,6 +542,19 @@
 }
 
 /* ===== Markdown prose for chat replies ===== */
+.tf-weather-card { margin: 0 0 18px; max-width: 520px; border-top: 1px solid color-mix(in srgb, var(--foreground) 24%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--foreground) 24%, transparent); padding: 18px 0 14px; }
+.tf-weather-card-head { display: flex; justify-content: space-between; color: var(--ink-soft); font-size: 14px; }
+.tf-weather-card-icon { font-size: 42px; line-height: 1; color: var(--foreground); }
+.tf-weather-card-main strong { font-size: 42px; font-weight: 400; }
+.tf-weather-card-main span { font-size: 24px; color: var(--ink-soft); margin-left: 8px; }
+.tf-weather-card-main p { margin: 3px 0; color: var(--ink-soft); }
+.tf-weather-condition { color: var(--foreground) !important; font-size: 18px; }
+.tf-weather-summary { max-width: 360px; margin: 14px 0; font-size: 18px; line-height: 1.45; }
+.tf-weather-stats { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--border); padding-top: 12px; gap: 8px; }
+.tf-weather-stats span { color: var(--ink-soft); font-size: 12px; }
+.tf-weather-stats strong { display: block; color: var(--foreground); font-size: 15px; font-weight: 400; margin-top: 3px; }
+@media (max-width: 520px) { .tf-weather-card { max-width: 100%; } .tf-weather-main strong { font-size: 38px; } .tf-weather-stats strong { font-size: 14px; } }
+
 .tf-prose {
   color: var(--foreground);
 }

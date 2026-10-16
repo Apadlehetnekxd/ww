@@ -17,6 +17,7 @@ export type SearchQueryPlan = { primary_query: string; alternative_queries: stri
 const SEARCH_COMMANDS = /\b(keress(?:\s+rá)?(?:\s+a\s+neten)?|nézz\s+utána|keresd\s+meg|ellenőrizd|nézd\s+meg\s+a\s+neten|kutass\s+utána|search|look\s+up|find\s+out|check\s+online|verify)\b/giu;
 const CURRENT_TERMS = /\b(most|jelenleg|ma|mostanában|friss|legújabb|legfrissebb|jelenlegi|tegnap|ezen\s+a\s+héten|recent|current|latest|today|right\s+now|live)\b/iu;
 const QUESTION_TERMS = /\b(ki|mi|melyik|mennyi|hol|mikor|hogyan|which|who|what|where|when|how|price|ár|verzió|version)\b/iu;
+const WEATHER_TERMS = /\b(időjárás|idojaras|idő|ido|eső|eso|napos|felhős|felhos|hőmérséklet|homerseklet|szél|szelet|csapadék|csapadek|vihar|fagy|havazás|havazas|weather|forecast|rain|sunny|cloudy|temperature|wind|tomorrow|holnap|ma este|ma délután|ma delutan)\b/iu;
 
 export function normalizeSearchText(input: string): string {
   return input.replace(SEARCH_COMMANDS, ' ').replace(/\b(aktívan|actively|a\s+neten|neten|online|rá)\b/giu, ' ').replace(/\s+/g, ' ').trim();
@@ -29,12 +30,13 @@ export function analyzeSearchIntent(input: string, context: string[] = []): Sear
   const language: SearchIntent['original_language'] = /[áéíóöőúüű]/iu.test(original) ? 'hu' : /\b(the|what|who|current|search|latest)\b/iu.test(original) ? 'en' : 'unknown';
   const explicit = SEARCH_COMMANDS.test(original);
   SEARCH_COMMANDS.lastIndex = 0;
-  const freshness = CURRENT_TERMS.test(combined) || explicit;
+  const weatherRequest = WEATHER_TERMS.test(combined);
+  const freshness = CURRENT_TERMS.test(combined) || explicit || weatherRequest;
   const contextSubject = context.at(-1) || '';
   const question = normalized.length < 12 && contextSubject ? `${contextSubject} ${normalized}`.trim() : normalized || contextSubject || original;
   const entities = Array.from(question.matchAll(/\b(?:[A-ZÁÉÍÓÖŐÚÜŰ][\wÁÉÍÓÖŐÚÜŰ-]*\s*){1,4}/gu)).map((m) => m[0].trim()).filter((v) => v.length > 2);
   const intent_type = freshness ? 'current_information' : QUESTION_TERMS.test(question) ? 'factual_lookup' : 'research';
-  return { intent_type, subject: question, question: original || question, entities, constraints: [], freshness_required: freshness, search_required: explicit || freshness, original_language: language, confidence: normalized ? 0.84 : 0.56 };
+  return { intent_type, subject: question, question: original || question, entities, constraints: [], freshness_required: freshness, search_required: explicit || freshness || weatherRequest, original_language: language, confidence: normalized ? 0.84 : 0.56 };
 }
 
 export function planSearchQueries(intent: SearchIntent): SearchQueryPlan {
