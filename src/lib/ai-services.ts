@@ -10,7 +10,7 @@ export const ULTRA_COOLDOWN_MS = 10 * 60 * 1000;
 export const ULTRA_MESSAGES_PER_COOLDOWN = 5;
 
 const QUALITY_MODEL = "nvidia/nemotron-3-super-120b-a12b:free";
-const SPEED_MODEL = "liquid/lfm-2.5-2.6b:free";
+const SPEED_MODEL = QUALITY_MODEL;
 const ULTRA_MODEL = "nvidia/nemotron-3.5-super-vl:free";
 
 const OPENROUTER_CHAT_MODELS: Record<ChatModelMode, string> = {
@@ -75,6 +75,15 @@ async function performWebSearch(query: string, onProgress?: StreamChatOptions['o
 // ============================================================================
 // CHAT SERVICE
 // ============================================================================
+
+function cleanModelText(value: string): string {
+  return value
+    .replace(/<\|tool_call_start\|>[\s\S]*?<\|tool_call_end\|>/gi, "")
+    .replace(/<\|tool_call_start\|>[\s\S]*$/gi, "")
+    .replace(/<\|tool_call_end\|>/gi, "")
+    .replace(/\[web_search\([\s\S]*?\)\]/gi, "")
+    .trim();
+}
 
 export type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
 export type UltraComparison = { quality: string; speed: string };
@@ -143,7 +152,7 @@ async function collectOpenRouterAnswer(
     }
     if (done) break;
   }
-  return answer.trim();
+  return cleanModelText(answer);
 }
 
 export async function streamChat(
@@ -338,6 +347,8 @@ ${
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
+    let rawAnswer = "";
+    let emittedAnswer = "";
     while (true) {
       const { value, done } = await reader.read();
       buffer += decoder.decode(value, { stream: !done });
@@ -348,7 +359,12 @@ ${
         const chunk = JSON.parse(line.slice(6));
         const content = chunk.choices?.[0]?.delta?.content;
         if (typeof content !== "string") continue;
-        onChunk(content);
+        rawAnswer += content;
+        const cleanAnswer = cleanModelText(rawAnswer);
+        if (cleanAnswer.length > emittedAnswer.length) {
+          onChunk(cleanAnswer.slice(emittedAnswer.length));
+          emittedAnswer = cleanAnswer;
+        }
       }
       if (done) break;
     }
