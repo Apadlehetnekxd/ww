@@ -223,7 +223,10 @@ export async function streamChat(
         .filter((message) => message.role === 'user' || message.role === 'assistant')
         .map((message) => typeof message.content === 'string' ? message.content : '')
         .filter(Boolean);
-      searchContext = await performWebSearch(lastUser.content, options.onWebSearchProgress, conversationContext);
+      const shouldSearch = shouldSearchWithIntent(lastUser.content, conversationContext, webSearch);
+      if (shouldSearch) {
+        searchContext = await performWebSearch(lastUser.content, options.onWebSearchProgress, conversationContext);
+      }
     }
 
     const now = new Date();
@@ -235,8 +238,10 @@ CURRENT DATE CONTEXT (trusted runtime value): Today is ${currentDate}. ISO date:
 
 IMPORTANT RESPONSE GUIDELINES:
 - NEVER use markdown tables. Format information as clean bullet points or numbered lists instead.
-- Write naturally and conversationally, like a knowledgeable friend explaining things.
+- Write naturally and conversationally, like a thoughtful, well-educated human—not like a template or a search engine.
+- Use precise, varied wording and fluent sentence structure. Avoid awkward literal translations, filler, repetition, and vague claims.
 - Be concise but thorough. Break down complex topics into easy-to-understand sections.
+- Before answering, silently organize the key facts and the user's actual goal; then give one polished answer with a clear beginning, useful detail, and a confident conclusion.
 - Use headers (##) to organize longer responses, but keep them simple.
 - Use **bold** for emphasis on key terms or important points.
 - Detect the user's language and ALWAYS respond in the SAME language. If they write in Hungarian, respond in Hungarian. If English, respond in English. Etc.
