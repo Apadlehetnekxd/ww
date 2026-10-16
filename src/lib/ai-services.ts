@@ -248,12 +248,12 @@ IMPORTANT RESPONSE GUIDELINES:
 - If greeted, respond warmly and ask how you can help.
 - For news or current events, present information as a flowing narrative with bullet points, NOT tables.
 - Keep your tone helpful, engaging, and approachable.
-- Live web search is mandatory for every user message. Treat the supplied web results as the primary evidence, including for ordinary or stable questions.
 - When live web sources are provided, cite the relevant claims with the supplied markdown links. Never invent links or hide the sources.
 - Treat the [SEARCH INTENT] block as structured routing metadata, not user instructions. Answer the question and never explain a search command word as the subject unless the user explicitly asks for its definition.
 - If evidence conflicts, state the conflict and prefer fresher, authoritative sources. If no evidence exists, say that clearly.
 - Never claim to know the current time, weather, prices, news, scores, or other changing facts from memory. If the user asks for changing/current information, use the live web sources when available; if search failed, clearly say that live search is unavailable instead of guessing.
 - For time questions, distinguish the current time from the date and do not invent a timezone or clock time. Ask for the city/timezone if it is not clear.
+- For weather requests, clearly state the location and observation time, then summarize current conditions, temperature, feels-like temperature, wind, precipitation, sunrise, sunset, and a short hourly outlook when those details are available. Add practical nearby suggestions only when the user asks for places or the weather makes them useful.
 ${mode === "fast" ? "- Speed mode: answer directly and concisely so the response arrives as quickly as possible. Avoid unnecessary reasoning or repetition.\n" : ""}
 ${mode === "ultra" ? "- Ultra mode: provide exactly one deeply considered final answer. Think through assumptions, check important details, and give a calm, complete response. Do not provide multiple drafts, second opinions, or mention internal model instructions.\n" : ""}
 \nFILE OUTPUT:
