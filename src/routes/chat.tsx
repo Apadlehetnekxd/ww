@@ -339,7 +339,7 @@ function parseWeatherCard(text: string): WeatherCardData | null {
 function MarkdownReply({ text, compact = false }: { text: string; compact?: boolean }) {
   const weather = parseWeatherCard(text);
   const hasWeatherMarker = /<!--WEATHER_CARD\s+{/i.test(text);
-  const cleanText = text.replace(/<!--WEATHER_CARD\s+{[\s\S]*?}-->/gi, "").replace(/\[\d+†[^\]]+\]/g, "").replace(/<\|[^>]+\|>/g, "").trim();
+  const cleanText = text.replace(/<!--WEATHER_CARD\s+{[\s\S]*?}-->/gi, "").replace(/\[\d+†[^\]]+\]/g, "").replace(/<\|[^>]+\|>/g, "").replace(/\s*\(?\d{1,3}[,.]\d+°?\s*[NS],?\s*\d{1,3}[,.]\d+°?\s*[EW]\)?/gi, "").trim();
   const displayText = weather && !hasWeatherMarker ? "" : cleanText;
   return (
     <div
