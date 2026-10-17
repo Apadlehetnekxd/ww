@@ -11,7 +11,7 @@ export const ULTRA_MESSAGES_PER_COOLDOWN = 5;
 
 const QUALITY_MODEL = "nvidia/nemotron-3-super-120b-a12b:free";
 const SPEED_MODEL = QUALITY_MODEL;
-const ULTRA_MODEL = "nvidia/nemotron-3.5-super-vl:free";
+const ULTRA_MODEL = QUALITY_MODEL;
 
 const OPENROUTER_CHAT_MODELS: Record<ChatModelMode, string> = {
   fast: SPEED_MODEL,
@@ -91,6 +91,7 @@ export type StreamChatOptions = {
   ultraCompare?: boolean;
   onUltraComparison?: (comparison: UltraComparison) => void;
   onWebSearchProgress?: (progress: { status: 'started' | 'complete'; query: string; count: number; sources: string[] }) => void;
+  location?: { latitude: number; longitude: number; accuracy?: number };
 };
 
 async function collectOpenRouterAnswer(
@@ -225,14 +226,20 @@ export async function streamChat(
         .filter(Boolean);
       const shouldSearch = shouldSearchWithIntent(lastUser.content, conversationContext, webSearch);
       if (shouldSearch) {
-        searchContext = await performWebSearch(lastUser.content, options.onWebSearchProgress, conversationContext);
+        const locationSuffix = options.location
+        ? ` Location: ${options.location.latitude.toFixed(4)}, ${options.location.longitude.toFixed(4)}. Use this location for precise local weather.`
+        : "";
+      searchContext = await performWebSearch(`${lastUser.content}${locationSuffix}`, options.onWebSearchProgress, conversationContext);
       }
     }
 
     const now = new Date();
   const currentDate = now.toLocaleDateString('hu-HU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
   const currentIsoDate = now.toISOString().slice(0, 10);
-  const systemMessage = `You are Neurix, a friendly and helpful AI assistant.
+  const locationContext = options.location
+    ? `\nUSER LOCATION (browser permission granted): latitude ${options.location.latitude.toFixed(4)}, longitude ${options.location.longitude.toFixed(4)}. Use it for local weather and nearby recommendations; do not expose raw coordinates unless useful.`
+    : "";
+  const systemMessage = `You are Neurix, a friendly and helpful AI assistant.${locationContext}
 
 CURRENT DATE CONTEXT (trusted runtime value): Today is ${currentDate}. ISO date: ${currentIsoDate}. Use this exact date when the user asks what day/date it is. Do not guess or claim another date.
 
