@@ -10,6 +10,17 @@ export const ULTRA_COOLDOWN_MS = 10 * 60 * 1000;
 export const ULTRA_MESSAGES_PER_COOLDOWN = 5;
 
 const QUALITY_MODEL = "nvidia/nemotron-3-super-120b-a12b:free";
+
+async function fetchPreciseWeather(location?: { latitude: number; longitude: number }) {
+  if (!location) return "";
+  const params = new URLSearchParams({ latitude: String(location.latitude), longitude: String(location.longitude), daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset", hourly: "temperature_2m,precipitation_probability,weather_code,wind_speed_10m", forecast_days: "2", timezone: "auto" });
+  try {
+    const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`, { signal: AbortSignal.timeout(9000) });
+    if (!response.ok) return "";
+    const data = await response.json() as { daily?: Record<string, unknown[]>; hourly?: Record<string, unknown[]> };
+    return `\n[PRECISE WEATHER DATA]\n${JSON.stringify(data)}\n[END PRECISE WEATHER DATA]`;
+  } catch { return ""; }
+}
 const SPEED_MODEL = QUALITY_MODEL;
 const ULTRA_MODEL = QUALITY_MODEL;
 
@@ -218,12 +229,15 @@ export async function streamChat(
       : OPENROUTER_CHAT_MODELS[mode];
 
     let searchContext = "";
+    let preciseWeatherContext = "";
     const lastUser = [...recent].reverse().find((m) => m.role === "user");
     if (lastUser) {
       const conversationContext = recent
         .filter((message) => message.role === 'user' || message.role === 'assistant')
         .map((message) => typeof message.content === 'string' ? message.content : '')
         .filter(Boolean);
+      const weatherQuestion = /(időjárás|idő lesz|idojaras|ido lesz|forecast|weather|eső|eso|hőmérséklet|homerseklet|holnap)/iu.test(lastUser.content);
+      if (weatherQuestion) preciseWeatherContext = await fetchPreciseWeather(options.location);
       const shouldSearch = shouldSearchWithIntent(lastUser.content, conversationContext, webSearch);
       if (shouldSearch) {
         const locationSuffix = options.location
@@ -237,7 +251,7 @@ export async function streamChat(
   const currentDate = now.toLocaleDateString('hu-HU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
   const currentIsoDate = now.toISOString().slice(0, 10);
   const locationContext = options.location
-    ? `\nUSER LOCATION (browser permission granted): latitude ${options.location.latitude.toFixed(4)}, longitude ${options.location.longitude.toFixed(4)}. Use it for local weather and nearby recommendations; do not expose raw coordinates unless useful.`
+    ? "\nUSER LOCATION (browser permission granted): use this private location for local weather and nearby recommendations. Never reveal coordinates or location metadata in the answer."
     : "";
   const systemMessage = `You are Neurix, a friendly and helpful AI assistant.${locationContext}
 
@@ -276,7 +290,7 @@ ${
 - Wrap each edited file in a fenced code block whose info string is exactly \`file:<the original filename>\`. Example:\n\`\`\`file:${textFiles[0].name}\n<full updated contents here>\n\`\`\`
 - You may add a short explanation before or after the block, but the block itself must contain the entire final file.`
     : ""
-}${searchContext ? `\nHere is relevant information from a web search:\n${searchContext}\nUse this information to provide an accurate and up-to-date response. Remember: NO TABLES, use bullet points and natural language instead.` : ""}`;
+}${preciseWeatherContext}${searchContext ? `\nHere is relevant information from a web search:\n${searchContext}\nUse this information to provide an accurate and up-to-date response. Remember: NO TABLES, use bullet points and natural language instead.` : ""}`;
 
     if (mode === "ultra") {
       const ultraMessages = formatted as unknown[];
