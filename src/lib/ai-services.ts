@@ -11,6 +11,23 @@ export const ULTRA_MESSAGES_PER_COOLDOWN = 5;
 
 const QUALITY_MODEL = "nvidia/nemotron-3-super-120b-a12b:free";
 
+function weatherMarkerFromContext(context: string, location?: { latitude: number; longitude: number }) {
+  const json = context.match(/\[PRECISE WEATHER DATA\]\n([\s\S]*?)\n\[END PRECISE WEATHER DATA\]/)?.[1];
+  if (!json) return "";
+  try {
+    const data = JSON.parse(json) as { daily?: Record<string, unknown[]>; hourly?: Record<string, unknown[]> };
+    const daily = data.daily ?? {};
+    const index = 1;
+    const high = daily.temperature_2m_max?.[index];
+    const low = daily.temperature_2m_min?.[index];
+    const rain = daily.precipitation_probability_max?.[index];
+    const code = Number(daily.weather_code?.[index] ?? 0);
+    const condition = code >= 51 ? "Esős" : code >= 3 ? "Felhős" : "Napos";
+    const icon = code >= 51 ? "rain" : code >= 2 ? "partly-cloudy" : "sunny";
+    return `<!--WEATHER_CARD ${JSON.stringify({ location: "Helyi előrejelzés", day: "Holnap", condition, icon, high: `${high ?? "—"}°C`, low: `${low ?? "—"}°C`, rain: `${rain ?? "—"}%`, wind: "—", summary: "" })}-->`;
+  } catch { return ""; }
+}
+
 async function fetchPreciseWeather(location?: { latitude: number; longitude: number }) {
   if (!location) return "";
   const params = new URLSearchParams({ latitude: String(location.latitude), longitude: String(location.longitude), daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset", hourly: "temperature_2m,precipitation_probability,weather_code,wind_speed_10m", forecast_days: "2", timezone: "auto" });
@@ -230,6 +247,7 @@ export async function streamChat(
 
     let searchContext = "";
     let preciseWeatherContext = "";
+    let weatherCardMarker = "";
     const lastUser = [...recent].reverse().find((m) => m.role === "user");
     if (lastUser) {
       const conversationContext = recent
@@ -237,7 +255,10 @@ export async function streamChat(
         .map((message) => typeof message.content === 'string' ? message.content : '')
         .filter(Boolean);
       const weatherQuestion = /(időjárás|idő lesz|idojaras|ido lesz|forecast|weather|eső|eso|hőmérséklet|homerseklet|holnap)/iu.test(lastUser.content);
-      if (weatherQuestion) preciseWeatherContext = await fetchPreciseWeather(options.location);
+      if (weatherQuestion) {
+        preciseWeatherContext = await fetchPreciseWeather(options.location);
+        weatherCardMarker = weatherMarkerFromContext(preciseWeatherContext, options.location);
+      }
       const shouldSearch = shouldSearchWithIntent(lastUser.content, conversationContext, webSearch);
       if (shouldSearch) {
         const locationSuffix = options.location
@@ -387,15 +408,20 @@ ${
         const content = chunk.choices?.[0]?.delta?.content;
         if (typeof content !== "string") continue;
         rawAnswer += content;
-        const cleanAnswer = cleanModelText(rawAnswer);
-        if (cleanAnswer.length > emittedAnswer.length) {
-          onChunk(cleanAnswer.slice(emittedAnswer.length));
-          emittedAnswer = cleanAnswer;
+        if (!weatherCardMarker) {
+          const cleanAnswer = cleanModelText(rawAnswer);
+          if (cleanAnswer.length > emittedAnswer.length) {
+            onChunk(cleanAnswer.slice(emittedAnswer.length));
+            emittedAnswer = cleanAnswer;
+          }
         }
       }
       if (done) break;
     }
 
+    if (weatherCardMarker) {
+      onChunk(`${weatherCardMarker}${cleanModelText(rawAnswer).replace(/<!--WEATHER_CARD[\s\S]*?-->/gi, "").slice(0, 220)}`);
+    }
     onDone();
   } catch (e) {
   const message = e instanceof Error ? e.message : "Something went wrong";
