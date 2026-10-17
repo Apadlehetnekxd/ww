@@ -441,6 +441,8 @@ function ChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [webSearchProgress, setWebSearchProgress] = useState<{ status: 'started' | 'complete'; query: string; count: number; sources: string[] } | null>(null);
   const [searchConsent, setSearchConsent] = useState<string | null>(null);
+  const [locationStatus, setLocationStatus] = useState<"idle" | "requesting" | "ready" | "denied">("idle");
+  const locationRef = useRef<{ latitude: number; longitude: number; accuracy?: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string>(() => createId());
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
@@ -728,6 +730,7 @@ function ChatPage() {
         {
           ultraCompare: shouldCompareUltra,
           onWebSearchProgress: setWebSearchProgress,
+          location: locationRef.current ?? undefined,
           onUltraComparison: (comparison) => {
             setMessages((prev) =>
               prev.map((m) =>
@@ -751,11 +754,27 @@ function ChatPage() {
     ]
   );
 
+  const requestLocation = (onReady: () => void) => {
+    if (!navigator.geolocation) { setLocationStatus("denied"); onReady(); return; }
+    setLocationStatus("requesting");
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => { locationRef.current = { latitude: coords.latitude, longitude: coords.longitude, accuracy: coords.accuracy }; setLocationStatus("ready"); onReady(); },
+      () => { setLocationStatus("denied"); onReady(); },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 300000 }
+    );
+  };
+
   const onSubmit = (e: React.FormEvent) => {
   e.preventDefault();
   if (!input.trim() && attachments.length === 0) return;
   if (attachments.length === 0 && needsWebSearch(input) && searchConsent !== input.trim()) {
     setSearchConsent(input.trim());
+    if (/(időjárás|idojaras|idő lesz|ido lesz|weather|forecast|eső|eso|hőmérséklet|homerseklet|holnap)/iu.test(input) && !locationRef.current) {
+      requestLocation(() => send(input, attachments, true));
+      setInput("");
+      setAttachments([]);
+      return;
+    }
     return;
   }
   send(input, attachments, searchConsent === input.trim());
@@ -1049,7 +1068,7 @@ function ChatPage() {
               onSubmit={onSubmit}
   className="px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
   >
-  {searchConsent && <div className="tf-search-consent" role="dialog" aria-label="Allow web search"><span>Search the web for current information?</span><button type="submit">Search</button><button type="button" onClick={() => setSearchConsent(null)}>Not now</button></div>}
+  {searchConsent && <div className="tf-search-consent" role="dialog" aria-label="Allow web search"><span>Search the web for current information?{locationStatus === "requesting" ? " Getting your location for a more precise forecast…" : locationStatus === "denied" ? " Location unavailable; using a general forecast." : ""}</span><button type="submit">Search</button><button type="button" onClick={() => setSearchConsent(null)}>Not now</button></div>}
   <div className="px-1">
                 <AttachmentTray items={attachments} onRemove={removeAttachment} />
               </div>
@@ -1117,7 +1136,7 @@ function ChatPage() {
               onSubmit={onSubmit}
               className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-10 py-3 sm:py-5"
             >
-              {searchConsent && <div className="tf-search-consent" role="dialog" aria-label="Allow web search"><span>Search the web for current information?</span><button type="submit">Search</button><button type="button" onClick={() => setSearchConsent(null)}>Not now</button></div>}
+              {searchConsent && <div className="tf-search-consent" role="dialog" aria-label="Allow web search"><span>Search the web for current information?{locationStatus === "requesting" ? " Getting your location for a more precise forecast…" : locationStatus === "denied" ? " Location unavailable; using a general forecast." : ""}</span><button type="submit">Search</button><button type="button" onClick={() => setSearchConsent(null)}>Not now</button></div>}
               <AttachmentTray items={attachments} onRemove={removeAttachment} />
               <div className={"tf-composer-field " + (modelMode === "quality" ? "tf-composer-field-quality " : "") + "flex items-center gap-2 rounded-full bg-cream/60 border border-border pl-3 pr-2.5 py-2"}>
                 <button
