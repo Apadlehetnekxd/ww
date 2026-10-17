@@ -331,9 +331,12 @@ function parseWeatherCard(text: string): WeatherCardData | null {
   const high = temperatures[0];
   const low = temperatures[1];
   const rain = text.match(/(\d{1,3}\s*%)/u)?.[1];
+  const range = text.match(/(-?\d{1,2})\s*[°º]?\s*C?\s*[–-]\s*(-?\d{1,2})\s*[°º]?\s*C/iu);
+  const normalizedHigh = high || (range ? `${range[1]}°C` : undefined);
+  const normalizedLow = low || (range ? `${range[2]}°C` : undefined);
   const wind = text.match(/((?:\d{1,3}\s*[–-]\s*\d{1,3}|gyenge|mérsékelt)[^,.\n]{0,24}(?:km\/h|szél|intenzitás))/iu)?.[1];
   const condition = text.match(/(napos[^.\n]*|felhős[^.\n]*|esős[^.\n]*|záporos[^.\n]*)/iu)?.[1]?.trim();
-  return { location: text.match(/(?:Magyarországon|in)\s+([A-ZÁÉÍÓÖŐÚÜŰ][\wÁÉÍÓÖŐÚÜŰáéíóöőúüű-]*)/u)?.[1] || "Helyi előrejelzés", day: /holnap/iu.test(text) ? "Holnap" : "Ma", condition: condition || "Változó idő", icon: /eső|zápor/iu.test(text) ? "rain" : /felhő/iu.test(text) ? "partly-cloudy" : "sunny", high, low, rain, wind, summary: text.split(/\n\s*\n/)[0]?.slice(0, 180) };
+  return { location: text.match(/(?:Magyarországon|in)\s+([A-ZÁÉÍÓÖŐÚÜŰ][\wÁÉÍÓÖŐÚÜŰáéíóöőúüű-]*)/u)?.[1] || "Helyi előrejelzés", day: /holnap/iu.test(text) ? "Holnap" : "Ma", condition: condition || "Változó idő", icon: /eső|zápor/iu.test(text) ? "rain" : /felhő/iu.test(text) ? "partly-cloudy" : "sunny", high: normalizedHigh, low: normalizedLow, rain, wind, summary: text.split(/\n\s*\n/)[0]?.slice(0, 180) };
 }
 
 function MarkdownReply({ text, compact = false }: { text: string; compact?: boolean }) {
