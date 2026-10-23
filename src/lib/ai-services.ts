@@ -8,20 +8,24 @@ const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || "";
 const LEBANG_API_KEY = import.meta.env.LEBANG_API_KEY || import.meta.env.VITE_LEBANG_API_KEY || "";
 const LEBANG_BASE_URL = LEBANG_API_KEY ? "https://lebang.si/v1" : "/api/lebang";
 const USE_LEBANG = true;
-let lebangModelPromise: Promise<string> | null = null;
+let lebangModelsPromise: Promise<string[]> | null = null;
 
-async function getLebangModel(): Promise<string> {
-  if (!lebangModelPromise) {
-    lebangModelPromise = fetch(`${LEBANG_BASE_URL}/models`, { headers: { Authorization: `Bearer ${LEBANG_API_KEY}` } })
+async function getLebangModels(): Promise<string[]> {
+  if (!lebangModelsPromise) {
+    lebangModelsPromise = fetch(`${LEBANG_BASE_URL}/models`, { headers: { Authorization: `Bearer ${LEBANG_API_KEY}` } })
       .then(async (response) => {
         if (!response.ok) throw new Error(`Lebang model discovery failed (${response.status})`);
         const payload = await response.json() as { data?: Array<{ id?: string }> };
-        const model = payload.data?.find((item) => item.id)?.id;
-        if (!model) throw new Error("Lebang did not return an available model.");
-        return model;
+        const models = (payload.data ?? []).map((item) => item.id).filter((id): id is string => Boolean(id));
+        if (!models.length) throw new Error("Lebang did not return available models.");
+        return models;
       });
   }
-  return lebangModelPromise;
+  return lebangModelsPromise;
+}
+
+async function getLebangModel(): Promise<string> {
+  return (await getLebangModels())[0];
 }
 
 export type ChatModelMode = "fast" | "quality" | "ultra";
@@ -409,14 +413,21 @@ ${
 
     const providerBaseUrl = USE_LEBANG ? LEBANG_BASE_URL : "https://openrouter.ai/api";
     const providerApiKey = USE_LEBANG ? LEBANG_API_KEY : OPENROUTER_API_KEY;
-    const response = await fetch(`${providerBaseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${providerApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestBody),
-    });
+    const candidateModels = USE_LEBANG ? (await getLebangModels()).slice(0, 8) : [activeModel];
+    let response: Response | null = null;
+    let lastFailure = "";
+    for (const candidateModel of candidateModels) {
+      const candidateBody = { ...requestBody, model: candidateModel };
+      const candidateResponse = await fetch(`${providerBaseUrl}/chat/completions`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${providerApiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify(candidateBody),
+      });
+      if (candidateResponse.ok) { response = candidateResponse; break; }
+      lastFailure = await candidateResponse.text();
+      if (![408, 429, 500, 502, 503, 504].includes(candidateResponse.status)) break;
+    }
+    if (!response) throw new Error(lastFailure || "All available AI models are temporarily unavailable.");
 
     if (!response.ok) {
       const body = await response.text();
