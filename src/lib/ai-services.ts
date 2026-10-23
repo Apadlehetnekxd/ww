@@ -6,7 +6,7 @@ import { validateTomorrowForecast, weatherCardMarker, type WeatherLocation } fro
 
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || "";
 const LEBANG_API_KEY = import.meta.env.LEBANG_API_KEY || import.meta.env.VITE_LEBANG_API_KEY || "";
-const LEBANG_BASE_URL = LEBANG_API_KEY ? "https://lebang.si/v1" : "/api/lebang";
+const LEBANG_BASE_URL = "/api/lebang";
 const USE_LEBANG = true;
 let lebangModelsPromise: Promise<string[]> | null = null;
 const LEBANG_FALLBACK_MODELS = ["gpt-6-astra", "gpt-6.1-sol", "gpt-6-sol", "gpt-6-luna", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", "claude-fable-5-1"];
