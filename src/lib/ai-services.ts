@@ -9,16 +9,23 @@ const LEBANG_API_KEY = import.meta.env.LEBANG_API_KEY || import.meta.env.VITE_LE
 const LEBANG_BASE_URL = LEBANG_API_KEY ? "https://lebang.si/v1" : "/api/lebang";
 const USE_LEBANG = true;
 let lebangModelsPromise: Promise<string[]> | null = null;
+const LEBANG_FALLBACK_MODELS = ["gpt-6-astra", "gpt-6.1-sol", "gpt-6-sol", "gpt-6-luna", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", "claude-fable-5-1"];
 
 async function getLebangModels(): Promise<string[]> {
   if (!lebangModelsPromise) {
     lebangModelsPromise = fetch(`${LEBANG_BASE_URL}/models`, { headers: { Authorization: `Bearer ${LEBANG_API_KEY}` } })
       .then(async (response) => {
-        if (!response.ok) throw new Error(`Lebang model discovery failed (${response.status})`);
+        if (!response.ok) {
+          if ([404, 405, 501].includes(response.status)) return LEBANG_FALLBACK_MODELS;
+          throw new Error(`Lebang model discovery failed (${response.status})`);
+        }
         const payload = await response.json() as { data?: Array<{ id?: string }> };
         const models = (payload.data ?? []).map((item) => item.id).filter((id): id is string => Boolean(id));
-        if (!models.length) throw new Error("Lebang did not return available models.");
-        return models;
+        return models.length ? models : LEBANG_FALLBACK_MODELS;
+      })
+      .catch((error) => {
+        if (error instanceof Error && /discovery failed \((404|405|501)\)/.test(error.message)) return LEBANG_FALLBACK_MODELS;
+        throw error;
       });
   }
   return lebangModelsPromise;
