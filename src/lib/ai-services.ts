@@ -15,18 +15,12 @@ async function getLebangModels(): Promise<string[]> {
   if (!lebangModelsPromise) {
     lebangModelsPromise = fetch(`${LEBANG_BASE_URL}/models`, { headers: { Authorization: `Bearer ${LEBANG_API_KEY}` } })
       .then(async (response) => {
-        if (!response.ok) {
-          if ([404, 405, 501].includes(response.status)) return LEBANG_FALLBACK_MODELS;
-          throw new Error(`Lebang model discovery failed (${response.status})`);
-        }
+        if (!response.ok) return LEBANG_FALLBACK_MODELS;
         const payload = await response.json() as { data?: Array<{ id?: string }> };
         const models = (payload.data ?? []).map((item) => item.id).filter((id): id is string => Boolean(id));
         return models.length ? models : LEBANG_FALLBACK_MODELS;
       })
-      .catch((error) => {
-        if (error instanceof Error && /discovery failed \((404|405|501)\)/.test(error.message)) return LEBANG_FALLBACK_MODELS;
-        throw error;
-      });
+      .catch(() => LEBANG_FALLBACK_MODELS);
   }
   return lebangModelsPromise;
 }
