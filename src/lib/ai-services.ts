@@ -5,6 +5,24 @@ import { analyzeSearchIntent, buildResearchInstruction, planSearchQueries, shoul
 import { validateTomorrowForecast, weatherCardMarker, type WeatherLocation } from "./weather";
 
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || "";
+const LEBANG_API_KEY = import.meta.env.LEBANG_API_KEY || import.meta.env.VITE_LEBANG_API_KEY || "";
+const LEBANG_BASE_URL = LEBANG_API_KEY ? "https://lebang.si/v1" : "/api/lebang";
+const USE_LEBANG = true;
+let lebangModelPromise: Promise<string> | null = null;
+
+async function getLebangModel(): Promise<string> {
+  if (!lebangModelPromise) {
+    lebangModelPromise = fetch(`${LEBANG_BASE_URL}/models`, { headers: { Authorization: `Bearer ${LEBANG_API_KEY}` } })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`Lebang model discovery failed (${response.status})`);
+        const payload = await response.json() as { data?: Array<{ id?: string }> };
+        const model = payload.data?.find((item) => item.id)?.id;
+        if (!model) throw new Error("Lebang did not return an available model.");
+        return model;
+      });
+  }
+  return lebangModelPromise;
+}
 
 export type ChatModelMode = "fast" | "quality" | "ultra";
 export const ULTRA_COOLDOWN_MS = 10 * 60 * 1000;
@@ -117,6 +135,37 @@ export type StreamChatOptions = {
   location?: { latitude: number; longitude: number; accuracy?: number };
 };
 
+async function collectLebangAnswer(messages: unknown[]): Promise<string> {
+  const model = await getLebangModel();
+  const response = await fetch(`${LEBANG_BASE_URL}/chat/completions`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${LEBANG_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ model, messages, stream: true, temperature: 0.35, max_tokens: 3072 }),
+  });
+  if (!response.ok) throw new Error((await response.text()) || `Lebang request failed (${response.status}).`);
+  if (!response.body) throw new Error("Lebang returned an empty response.");
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let answer = "";
+  while (true) {
+    const { value, done } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    const lines = buffer.split("\\n");
+    buffer = lines.pop() ?? "";
+    for (const line of lines) {
+      if (!line.startsWith("data: ") || line === "data: [DONE]") continue;
+      try {
+        const chunk = JSON.parse(line.slice(6)) as { choices?: Array<{ delta?: { content?: unknown } }> };
+        const content = chunk.choices?.[0]?.delta?.content;
+        if (typeof content === "string") answer += content;
+      } catch { /* Ignore keep-alive chunks. */ }
+    }
+    if (done) break;
+  }
+  return cleanModelText(answer);
+}
+
 async function collectOpenRouterAnswer(
   model: string,
   messages: unknown[]
@@ -189,8 +238,8 @@ export async function streamChat(
   mode: ChatModelMode = "quality",
   options: StreamChatOptions = {}
 ): Promise<void> {
-  if (!OPENROUTER_API_KEY) {
-    onError("Chat is not available. Please configure the VITE_OPENROUTER_API_KEY environment variable.");
+  if (!LEBANG_API_KEY && !OPENROUTER_API_KEY && !USE_LEBANG) {
+    onError("Chat is not available. Please configure LEBANG_API_KEY or VITE_OPENROUTER_API_KEY.");
     return;
   }
 
@@ -236,9 +285,11 @@ export async function streamChat(
       }
     }
 
-    const activeModel = imageFiles.length > 0
-      ? OPENROUTER_VISION_MODELS[mode]
-      : OPENROUTER_CHAT_MODELS[mode];
+    const activeModel = USE_LEBANG
+      ? await getLebangModel()
+      : imageFiles.length > 0
+        ? OPENROUTER_VISION_MODELS[mode]
+        : OPENROUTER_CHAT_MODELS[mode];
 
     let searchContext = "";
     let preciseWeatherContext = "";
@@ -356,10 +407,12 @@ ${
       requestBody.max_tokens = 1024;
     }
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const providerBaseUrl = USE_LEBANG ? LEBANG_BASE_URL : "https://openrouter.ai/api";
+    const providerApiKey = USE_LEBANG ? LEBANG_API_KEY : OPENROUTER_API_KEY;
+    const response = await fetch(`${providerBaseUrl}/chat/completions`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+        Authorization: `Bearer ${providerApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(requestBody),
@@ -368,7 +421,7 @@ ${
     if (!response.ok) {
       const body = await response.text();
       if (response.status === 401 || response.status === 403) {
-        onError("OpenRouter authentication failed. Set a valid VITE_OPENROUTER_API_KEY in .env and restart the dev server.");
+        onError(LEBANG_API_KEY ? "Lebang authentication failed. Check LEBANG_API_KEY." : "OpenRouter authentication failed. Check VITE_OPENROUTER_API_KEY.");
         return;
       }
       if (response.status === 429) {

@@ -10,6 +10,7 @@ import { handleTtsRequest } from './server/tts-handler';
 import { handleLensRequest, lensEnvironment } from './server/lens-handler';
 import { handleWebSearchRequest, webSearchEnvironment } from './server/web-search-handler';
 import { visionEnvironment } from './server/vision-env';
+import { handleLebangRequest, lebangEnvironment } from './server/lebang-handler';
 
 function localApi<TEnv>(path: string, handle: (request: Request, env: TEnv) => Promise<Response>, env: TEnv): Plugin {
   return {
@@ -56,6 +57,8 @@ export default defineConfig(({ mode }) => {
       localApi('/api/tts', handleTtsRequest, visionEnvironment(env)),
       localApi('/api/lens', handleLensRequest, lensEnvironment(env)),
       localApi('/api/search', handleWebSearchRequest, webSearchEnvironment(env)),
+      localApi('/api/lebang/models', handleLebangRequest, lebangEnvironment(env)),
+      localApi('/api/lebang/chat/completions', handleLebangRequest, lebangEnvironment(env)),
     ],
     server: {
       host: '0.0.0.0', port: phone ? 3443 : 3000, strictPort: true,
